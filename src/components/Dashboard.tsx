@@ -158,18 +158,6 @@ function Toast({ message, type = "success" }: { message: string; type?: string }
   );
 }
 
-// Table primitives
-function THead({ cols }: { cols: string[] }) {
-  return (
-    <div className="flex items-center gap-4 px-6 py-3.5 border-b border-zinc-100">
-      {cols.map(c => (
-        <span key={c} className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest flex-1 first:flex-[1.2]">
-          {c}
-        </span>
-      ))}
-    </div>
-  );
-}
 
 function Spinner() {
   return (
