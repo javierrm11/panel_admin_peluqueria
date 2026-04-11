@@ -1,10 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL,
-  import.meta.env.VITE_SUPABASE_ANON_KEY
-);
+import { supabase } from "../lib/supabase";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -176,7 +171,7 @@ function Empty({ msg }: { msg: string }) {
 
 // ─── SECTION: CITAS ───────────────────────────────────────────────────────────
 
-function SectionCitas({ toast }: { toast: (m: string, t?: string) => void }) {
+function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
   const [vista, setVista] = useState<"hoy" | "semana">("hoy");
   const [citas, setCitas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -189,11 +184,12 @@ function SectionCitas({ toast }: { toast: (m: string, t?: string) => void }) {
     const { data } = await supabase
       .from("citas")
       .select("id, fecha, hora, estado, clientes(telefono), servicios(nombre, precio), barberos(nombre)")
+      .eq("empresa_id", empresaId)
       .gte("fecha", inicio).lte("fecha", fin)
       .order("fecha", { ascending: true }).order("hora", { ascending: true });
     setCitas(data || []);
     setLoading(false);
-  }, [vista]);
+  }, [vista, empresaId]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -348,7 +344,7 @@ function SectionCitas({ toast }: { toast: (m: string, t?: string) => void }) {
 
 // ─── SECTION: BARBEROS ────────────────────────────────────────────────────────
 
-function SectionBarberos({ toast }: { toast: (m: string, t?: string) => void }) {
+function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
   const [barberos, setBarberos]         = useState<any[]>([]);
   const [servicios, setServicios]       = useState<any[]>([]);
   const [modal, setModal]               = useState(false);
@@ -360,13 +356,13 @@ function SectionBarberos({ toast }: { toast: (m: string, t?: string) => void }) 
   const cargar = useCallback(async () => {
     setLoading(true);
     const [{ data: b }, { data: s }] = await Promise.all([
-      supabase.from("barberos").select("id, nombre, activo").order("id"),
-      supabase.from("servicios").select("id, nombre"),
+      supabase.from("barberos").select("id, nombre, activo").eq("empresa_id", empresaId).order("id"),
+      supabase.from("servicios").select("id, nombre").eq("empresa_id", empresaId),
     ]);
     setBarberos(b || []);
     setServicios(s || []);
     setLoading(false);
-  }, []);
+  }, [empresaId]);
 
   useEffect(() => { cargar(); }, [cargar]);
 
@@ -392,7 +388,7 @@ function SectionBarberos({ toast }: { toast: (m: string, t?: string) => void }) 
     if (editando) {
       await supabase.from("barberos").update({ nombre }).eq("id", barberoId);
     } else {
-      const { data } = await supabase.from("barberos").insert({ nombre }).select().single();
+      const { data } = await supabase.from("barberos").insert({ nombre, empresa_id: empresaId }).select().single();
       barberoId = data.id;
     }
     await supabase.from("barbero_servicios").delete().eq("barbero_id", barberoId);
@@ -526,14 +522,14 @@ function SectionBarberos({ toast }: { toast: (m: string, t?: string) => void }) 
 
 // ─── SECTION: SERVICIOS ───────────────────────────────────────────────────────
 
-function SectionServicios({ toast }: { toast: (m: string, t?: string) => void }) {
+function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
   const [servicios, setServicios] = useState<any[]>([]);
   const [modal, setModal]         = useState(false);
   const [editando, setEditando]   = useState<any>(null);
   const [form, setForm]           = useState({ nombre: "", precio: "", duracion_minutos: "" });
 
   const cargar = useCallback(async () => {
-    const { data } = await supabase.from("servicios").select("*").order("id");
+    const { data } = await supabase.from("servicios").select("*").eq("empresa_id", empresaId).order("id");
     setServicios(data || []);
   }, []);
 
@@ -558,7 +554,7 @@ function SectionServicios({ toast }: { toast: (m: string, t?: string) => void })
     if (editando) {
       await supabase.from("servicios").update(payload).eq("id", editando.id);
     } else {
-      await supabase.from("servicios").insert(payload);
+      await supabase.from("servicios").insert({ ...payload, empresa_id: empresaId });
     }
     toast(editando ? "Servicio actualizado" : "Servicio creado", "success");
     setModal(false);
@@ -675,7 +671,7 @@ function SectionServicios({ toast }: { toast: (m: string, t?: string) => void })
 
 // ─── SECTION: HORARIOS ────────────────────────────────────────────────────────
 
-function SectionHorarios({ toast }: { toast: (m: string, t?: string) => void }) {
+function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
   const [barberos, setBarberos]     = useState<any[]>([]);
   const [selBarbero, setSelBarbero] = useState<any>(null);
   const [horarios, setHorarios]     = useState<any[]>([]);
@@ -684,12 +680,12 @@ function SectionHorarios({ toast }: { toast: (m: string, t?: string) => void }) 
   const [form, setForm]             = useState({ dia_semana: 1, hora_inicio: "09:00", hora_fin: "18:00" });
 
   useEffect(() => {
-    supabase.from("barberos").select("id, nombre").eq("activo", true).order("id")
+    supabase.from("barberos").select("id, nombre").eq("activo", true).eq("empresa_id", empresaId).order("id")
       .then(({ data }) => {
         setBarberos(data || []);
         if (data?.length) setSelBarbero(data[0]);
       });
-  }, []);
+  }, [empresaId]);
 
   const cargarHorarios = useCallback(async (barberoId: number) => {
     const { data } = await supabase
@@ -903,7 +899,7 @@ function SectionHorarios({ toast }: { toast: (m: string, t?: string) => void }) 
 
 // ─── SECTION: ESTADÍSTICAS ────────────────────────────────────────────────────
 
-function SectionEstadisticas() {
+function SectionEstadisticas({ empresaId }: { empresaId: string }) {
   const [stats, setStats] = useState<any>(null);
 
   useEffect(() => {
@@ -911,9 +907,9 @@ function SectionEstadisticas() {
       const hoy = fechaHoy();
       const inicioMes = hoy.substring(0, 7) + "-01";
       const [{ data: citasMes }, { data: serviciosTop }, { data: barberoStats }] = await Promise.all([
-        supabase.from("citas").select("estado, servicios(precio)").gte("fecha", inicioMes).eq("estado", "confirmada"),
-        supabase.from("citas").select("servicios(nombre)").eq("estado", "confirmada").gte("fecha", inicioMes),
-        supabase.from("citas").select("barberos(nombre)").eq("estado", "confirmada").gte("fecha", inicioMes),
+        supabase.from("citas").select("estado, servicios(precio)").eq("empresa_id", empresaId).gte("fecha", inicioMes).eq("estado", "confirmada"),
+        supabase.from("citas").select("servicios(nombre)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicioMes),
+        supabase.from("citas").select("barberos(nombre)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicioMes),
       ]);
       const ingresosMes = (citasMes || []).reduce((acc: number, c: any) => acc + parseFloat(c.servicios?.precio || 0), 0);
       const countServicios: Record<string, number> = {};
@@ -1044,7 +1040,7 @@ function SectionEstadisticas() {
 
 // ─── SECTION: VACACIONES ─────────────────────────────────────────────────────
 
-function SectionVacaciones({ toast }: { toast: (m: string, t?: string) => void }) {
+function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
   const [barberos, setBarberos]     = useState<any[]>([]);
   const [selBarbero, setSelBarbero] = useState<any>(null);
   const [vacaciones, setVacaciones] = useState<any[]>([]);
@@ -1053,12 +1049,12 @@ function SectionVacaciones({ toast }: { toast: (m: string, t?: string) => void }
   const [formError, setFormError]   = useState("");
 
   useEffect(() => {
-    supabase.from("barberos").select("id, nombre").eq("activo", true).order("id")
+    supabase.from("barberos").select("id, nombre").eq("activo", true).eq("empresa_id", empresaId).order("id")
       .then(({ data }) => {
         setBarberos(data || []);
         if (data?.length) setSelBarbero(data[0]);
       });
-  }, []);
+  }, [empresaId]);
 
   const cargarVacaciones = useCallback(async (barberoId: number) => {
     const { data } = await supabase
@@ -1259,9 +1255,15 @@ const SECCIONES = [
   { id: "estadisticas", label: "Estadísticas" },
 ];
 
-export default function Dashboard() {
-  const [seccion, setSeccion] = useState("citas");
-  const [toast, setToast]     = useState({ msg: "", type: "success" });
+export default function Dashboard({ empresaId }: { empresaId: string }) {
+  const [seccion, setSeccion]   = useState("citas");
+  const [toast, setToast]       = useState({ msg: "", type: "success" });
+  const [empresa, setEmpresa]   = useState<any>(null);
+
+  useEffect(() => {
+    supabase.from("empresas").select("nombre").eq("id", empresaId).single()
+      .then(({ data }) => setEmpresa(data));
+  }, [empresaId]);
 
   function showToast(msg: string, type = "success") {
     setToast({ msg, type });
@@ -1278,7 +1280,7 @@ export default function Dashboard() {
           {/* Logo */}
           <div className="flex items-center gap-2.5 flex-shrink-0">
             <span className="text-2xl">💈</span>
-            <span className="font-black text-zinc-900 text-[17px] leading-none">Peluquería Javier</span>
+            <span className="font-black text-zinc-900 text-[17px] leading-none">{empresa?.nombre ?? "…"}</span>
           </div>
 
           {/* Nav tabs */}
@@ -1312,9 +1314,11 @@ export default function Dashboard() {
             </button>
             <button
               type="button"
-              className="w-9 h-9 rounded-full bg-zinc-900 flex items-center justify-center text-white text-sm font-black"
+              onClick={() => supabase.auth.signOut()}
+              title="Cerrar sesión"
+              className="w-9 h-9 rounded-full bg-zinc-900 flex items-center justify-center text-white text-sm font-black hover:bg-zinc-700 transition"
             >
-              J
+              ↩
             </button>
           </div>
         </div>
@@ -1322,12 +1326,12 @@ export default function Dashboard() {
 
       {/* ── Content ── */}
       <main className="max-w-6xl mx-auto px-6 py-8">
-        {seccion === "citas"        && <SectionCitas        toast={showToast} />}
-        {seccion === "barberos"     && <SectionBarberos     toast={showToast} />}
-        {seccion === "servicios"    && <SectionServicios    toast={showToast} />}
-        {seccion === "horarios"     && <SectionHorarios     toast={showToast} />}
-        {seccion === "vacaciones"   && <SectionVacaciones   toast={showToast} />}
-        {seccion === "estadisticas" && <SectionEstadisticas />}
+        {seccion === "citas"        && <SectionCitas        toast={showToast} empresaId={empresaId} />}
+        {seccion === "barberos"     && <SectionBarberos     toast={showToast} empresaId={empresaId} />}
+        {seccion === "servicios"    && <SectionServicios    toast={showToast} empresaId={empresaId} />}
+        {seccion === "horarios"     && <SectionHorarios     toast={showToast} empresaId={empresaId} />}
+        {seccion === "vacaciones"   && <SectionVacaciones   toast={showToast} empresaId={empresaId} />}
+        {seccion === "estadisticas" && <SectionEstadisticas empresaId={empresaId} />}
       </main>
 
       <Toast message={toast.msg} type={toast.type} />
