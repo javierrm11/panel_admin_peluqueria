@@ -1042,6 +1042,212 @@ function SectionEstadisticas() {
   );
 }
 
+// ─── SECTION: VACACIONES ─────────────────────────────────────────────────────
+
+function SectionVacaciones({ toast }: { toast: (m: string, t?: string) => void }) {
+  const [barberos, setBarberos]     = useState<any[]>([]);
+  const [selBarbero, setSelBarbero] = useState<any>(null);
+  const [vacaciones, setVacaciones] = useState<any[]>([]);
+  const [modal, setModal]           = useState(false);
+  const [form, setForm]             = useState({ fecha_inicio: "", fecha_fin: "", motivo: "" });
+  const [formError, setFormError]   = useState("");
+
+  useEffect(() => {
+    supabase.from("barberos").select("id, nombre").eq("activo", true).order("id")
+      .then(({ data }) => {
+        setBarberos(data || []);
+        if (data?.length) setSelBarbero(data[0]);
+      });
+  }, []);
+
+  const cargarVacaciones = useCallback(async (barberoId: number) => {
+    const { data } = await supabase
+      .from("vacaciones").select("*")
+      .eq("barbero_id", barberoId)
+      .order("fecha_inicio");
+    setVacaciones(data || []);
+  }, []);
+
+  useEffect(() => {
+    if (selBarbero) cargarVacaciones(selBarbero.id);
+  }, [selBarbero, cargarVacaciones]);
+
+  function abrirModal() {
+    setForm({ fecha_inicio: "", fecha_fin: "", motivo: "" });
+    setFormError("");
+    setModal(true);
+  }
+
+  async function guardar() {
+    if (!form.fecha_inicio || !form.fecha_fin) {
+      setFormError("Las fechas de inicio y fin son obligatorias.");
+      return;
+    }
+    if (form.fecha_fin < form.fecha_inicio) {
+      setFormError("La fecha de fin no puede ser anterior a la de inicio.");
+      return;
+    }
+    setFormError("");
+    await supabase.from("vacaciones").insert({
+      barbero_id:   selBarbero.id,
+      fecha_inicio: form.fecha_inicio,
+      fecha_fin:    form.fecha_fin,
+      motivo:       form.motivo || null,
+    });
+    toast("Vacaciones guardadas", "success");
+    setModal(false);
+    cargarVacaciones(selBarbero.id);
+  }
+
+  async function eliminar(id: number) {
+    await supabase.from("vacaciones").delete().eq("id", id);
+    toast("Período eliminado", "success");
+    cargarVacaciones(selBarbero.id);
+  }
+
+  function formatFecha(f: string) {
+    if (!f) return "—";
+    const [y, m, d] = f.split("-");
+    return `${d}/${m}/${y}`;
+  }
+
+  return (
+    <div>
+      <div className="flex items-start justify-between mb-8">
+        <div>
+          <Label>Ausencias</Label>
+          <h2 className="text-4xl font-black text-zinc-900 mt-1">Vacaciones</h2>
+          <p className="text-sm text-zinc-500 mt-1">Bloquea fechas para que el bot no muestre disponibilidad durante ese período.</p>
+        </div>
+        <button
+          type="button"
+          onClick={abrirModal}
+          className="flex items-center gap-2 bg-zinc-900 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold hover:bg-zinc-700 transition shadow-lg shadow-zinc-900/20"
+        >
+          + Añadir Vacaciones
+        </button>
+      </div>
+
+      {/* Barbero selector */}
+      {barberos.length > 0 && (
+        <div className="flex gap-2 flex-wrap mb-6">
+          {barberos.map(b => (
+            <button
+              type="button"
+              key={b.id}
+              onClick={() => setSelBarbero(b)}
+              className={`flex items-center gap-2.5 px-4 py-2 rounded-2xl text-sm font-semibold transition shadow-sm ${
+                selBarbero?.id === b.id
+                  ? "bg-zinc-900 text-white shadow-zinc-900/20"
+                  : "bg-white text-zinc-700 hover:bg-zinc-100"
+              }`}
+            >
+              <Avatar name={b.nombre} size="sm" />
+              {b.nombre}
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+        {/* Table header */}
+        <div className="flex items-center gap-0 px-6 py-3 border-b border-zinc-100">
+          <span className="w-36 flex-shrink-0 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Fecha inicio</span>
+          <span className="w-36 flex-shrink-0 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Fecha fin</span>
+          <span className="flex-1 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Motivo</span>
+          <span className="w-20 flex-shrink-0 text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Acción</span>
+        </div>
+        {vacaciones.length === 0 ? (
+          <Empty msg="Sin vacaciones configuradas" />
+        ) : (
+          vacaciones.map((v, i) => (
+            <div
+              key={v.id}
+              className={`flex items-center gap-0 px-6 py-4 hover:bg-zinc-50/60 transition-colors ${
+                i < vacaciones.length - 1 ? "border-b border-zinc-50" : ""
+              }`}
+            >
+              <div className="w-36 flex-shrink-0">
+                <p className="text-sm font-semibold text-zinc-900">{formatFecha(v.fecha_inicio)}</p>
+              </div>
+              <div className="w-36 flex-shrink-0">
+                <p className="text-sm font-semibold text-zinc-900">{formatFecha(v.fecha_fin)}</p>
+              </div>
+              <div className="flex-1">
+                <p className="text-sm text-zinc-500">{v.motivo || <span className="text-zinc-300 italic">Sin motivo</span>}</p>
+              </div>
+              <div className="w-20 flex-shrink-0">
+                <button
+                  type="button"
+                  onClick={() => eliminar(v.id)}
+                  title="Eliminar"
+                  className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-100 transition text-sm"
+                >
+                  🗑️
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* Modal */}
+      <Modal open={modal} onClose={() => setModal(false)} title="Añadir Vacaciones">
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Fecha inicio"
+              type="date"
+              value={form.fecha_inicio}
+              onChange={e => setForm(f => ({ ...f, fecha_inicio: e.target.value }))}
+            />
+            <Input
+              label="Fecha fin"
+              type="date"
+              value={form.fecha_fin}
+              onChange={e => setForm(f => ({ ...f, fecha_fin: e.target.value }))}
+            />
+          </div>
+          <Input
+            label="Motivo (opcional)"
+            type="text"
+            value={form.motivo}
+            onChange={e => setForm(f => ({ ...f, motivo: e.target.value }))}
+            placeholder="Ej. Vacaciones de verano"
+          />
+          {formError && (
+            <p className="text-xs text-red-500 bg-red-50 rounded-xl px-4 py-3">{formError}</p>
+          )}
+          {selBarbero && (
+            <div className="flex gap-3 bg-amber-50 rounded-xl px-4 py-3.5">
+              <span className="text-amber-500 text-sm flex-shrink-0 mt-0.5">🏖</span>
+              <p className="text-xs text-amber-700 leading-relaxed">
+                El bot no mostrará disponibilidad de <strong>{selBarbero.nombre}</strong> durante este período.
+              </p>
+            </div>
+          )}
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={() => setModal(false)}
+              className="flex-1 bg-[#eeedf5] text-zinc-700 py-3 rounded-2xl text-sm font-semibold hover:bg-zinc-200 transition"
+            >
+              Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={guardar}
+              className="flex-1 bg-zinc-900 text-white py-3 rounded-2xl text-sm font-bold hover:bg-zinc-700 transition"
+            >
+              Guardar
+            </button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
 // ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 
 const SECCIONES = [
@@ -1049,6 +1255,7 @@ const SECCIONES = [
   { id: "barberos",     label: "Barberos" },
   { id: "servicios",    label: "Servicios" },
   { id: "horarios",     label: "Horarios" },
+  { id: "vacaciones",   label: "Vacaciones" },
   { id: "estadisticas", label: "Estadísticas" },
 ];
 
@@ -1119,6 +1326,7 @@ export default function Dashboard() {
         {seccion === "barberos"     && <SectionBarberos     toast={showToast} />}
         {seccion === "servicios"    && <SectionServicios    toast={showToast} />}
         {seccion === "horarios"     && <SectionHorarios     toast={showToast} />}
+        {seccion === "vacaciones"   && <SectionVacaciones   toast={showToast} />}
         {seccion === "estadisticas" && <SectionEstadisticas />}
       </main>
 
