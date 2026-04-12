@@ -8,7 +8,7 @@ export default function Login() {
   const [error,    setError]    = useState("");
   const [loading,  setLoading]  = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
@@ -21,55 +21,66 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-[#eeedf5] flex items-center justify-center font-sans">
-      <div className="w-full max-w-sm px-4">
+    <div className="min-h-screen bg-base flex items-center justify-center px-4">
+      {/* Background glow */}
+      <div className="fixed top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-brand/10 blur-[120px] rounded-full pointer-events-none" />
+
+      <div className="relative w-full max-w-sm">
         {/* Logo */}
-        <div className="flex items-center justify-center gap-2.5 mb-8">
-          <span className="text-3xl">💈</span>
-          <span className="font-black text-zinc-900 text-xl">Panel de Gestión</span>
+        <div className="text-center mb-8">
+          <p className="font-black text-white text-2xl tracking-tight">CitasWassap</p>
+          <p className="text-xs text-muted mt-1 uppercase tracking-widest">Premium Salon Admin</p>
         </div>
 
-        <div className="bg-white rounded-3xl shadow-sm p-8">
-          <h1 className="text-2xl font-black text-zinc-900 mb-1">Bienvenido</h1>
-          <p className="text-sm text-zinc-400 mb-7">Accede con tu cuenta de administrador.</p>
+        <div className="bg-surface border border-edge rounded-3xl p-8">
+          <h1 className="text-2xl font-black text-white mb-1">Bienvenido</h1>
+          <p className="text-sm text-muted mb-7">Accede con tu cuenta de administrador.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="flex flex-col gap-1.5">
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Email</p>
+              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Email</p>
               <input
                 type="email"
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="tu@email.com"
-                className="w-full bg-[#eeedf5] rounded-xl px-4 py-3 text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 transition"
+                className="w-full bg-surface-2 border border-edge hover:border-edge-light focus:border-brand rounded-xl px-4 py-3 text-sm text-white placeholder:text-muted focus:outline-none transition-colors"
               />
             </div>
+
             <div className="flex flex-col gap-1.5">
-              <p className="text-[10px] font-bold text-zinc-400 uppercase tracking-widest">Contraseña</p>
+              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Contraseña</p>
               <input
                 type="password"
                 required
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-[#eeedf5] rounded-xl px-4 py-3 text-sm text-zinc-800 placeholder:text-zinc-400 focus:outline-none focus:ring-2 focus:ring-zinc-900/20 transition"
+                className="w-full bg-surface-2 border border-edge hover:border-edge-light focus:border-brand rounded-xl px-4 py-3 text-sm text-white placeholder:text-muted focus:outline-none transition-colors"
               />
             </div>
 
             {error && (
-              <p className="text-xs text-red-500 bg-red-50 rounded-xl px-4 py-3">{error}</p>
+              <div className="bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">
+                <p className="text-xs text-red-400">{error}</p>
+              </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-zinc-900 text-white py-3 rounded-2xl text-sm font-bold hover:bg-zinc-700 transition disabled:opacity-50 mt-2"
+              className="w-full bg-brand hover:bg-brand-hover text-white py-3 rounded-2xl text-sm font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed mt-2"
             >
               {loading ? "Entrando..." : "Entrar"}
             </button>
           </form>
         </div>
+
+        <p className="text-center text-xs text-muted mt-6">
+          ¿Sin cuenta?{' '}
+          <a href="/#pricing" className="text-brand hover:underline">Ver planes</a>
+        </p>
       </div>
     </div>
   );
