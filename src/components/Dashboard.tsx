@@ -1281,6 +1281,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
       fecha_inicio: form.fecha_inicio,
       fecha_fin:    form.fecha_fin,
       motivo:       form.motivo || null,
+      empresa_id:   empresaId,
     });
     toast("Vacaciones guardadas", "success");
     setModal(false);

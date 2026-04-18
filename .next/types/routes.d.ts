@@ -52,9 +52,4 @@ declare global {
    * ```
    */
   type LayoutProps<LayoutRoute extends LayoutRoutes> = {
-    params: Promise<ParamMap[LayoutRoute]>
-    children: React.ReactNode
-  } & {
-    [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
-  }
-}
+    params: Promise<ParamMap[La
