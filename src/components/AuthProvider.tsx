@@ -59,27 +59,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('[Auth] loading=false (from DB), empresaId:', id)
   }
 
+  async function manejarSesion(currentSession: Session | null, event?: string) {
+    setSession(currentSession)
+
+    if (currentSession) {
+      await cargarEmpresa(currentSession.user.id)
+      return
+    }
+
+    setEmpresaId(null)
+    localStorage.removeItem(EMPRESA_CACHE_KEY)
+    setLoading(false)
+    console.log('[Auth] loading=false (no session)')
+
+    if (event && event !== 'INITIAL_SESSION') {
+      console.log('[Auth] redirecting to /login')
+      router.replace('/login')
+    }
+  }
+
   useEffect(() => {
-    console.log('[Auth] registering onAuthStateChange')
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('[Auth] onAuthStateChange event:', event, 'session:', !!session)
-        setSession(session)
-        if (session) {
-          await cargarEmpresa(session.user.id)
-        } else {
-          setEmpresaId(null)
-          localStorage.removeItem(EMPRESA_CACHE_KEY)
-          setLoading(false)
-          console.log('[Auth] loading=false (no session)')
-          if (event !== 'INITIAL_SESSION') {
-            console.log('[Auth] redirecting to /login')
-            router.push('/login')
-          }
-        }
+    let active = true
+
+    async function inicializarSesion() {
+      console.log('[Auth] initializing getSession')
+      const { data, error } = await supabase.auth.getSession()
+      if (!active) return
+
+      if (error) {
+        console.error('[Auth] getSession error:', error.message)
+        setSession(null)
+        setEmpresaId(null)
+        setLoading(false)
+        return
       }
-    )
-    return () => subscription.unsubscribe()
+
+      console.log('[Auth] getSession ready:', !!data.session)
+      await manejarSesion(data.session, 'INITIAL_SESSION')
+    }
+
+    void inicializarSesion()
+
+    console.log('[Auth] registering onAuthStateChange')
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (!active) return
+      console.log('[Auth] onAuthStateChange event:', event, 'session:', !!nextSession)
+      void manejarSesion(nextSession, event)
+    })
+
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
   }, [router])
 
   return (
