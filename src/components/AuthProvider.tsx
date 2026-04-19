@@ -4,6 +4,8 @@ import { useRouter } from 'next/navigation'
 import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 
+const EMPRESA_CACHE_KEY = 'cw_empresa_id'
+
 interface AuthContextValue {
   session: Session | null
   empresaId: string | null
@@ -27,13 +29,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   async function cargarEmpresa(userId: string) {
+    // Usar caché para mostrar el dashboard de inmediato en recargas
+    const cached = localStorage.getItem(EMPRESA_CACHE_KEY)
+    if (cached) {
+      setEmpresaId(cached)
+      setLoading(false)
+    }
+
     const { data, error } = await supabase
       .from('perfiles')
       .select('empresa_id')
       .eq('user_id', userId)
       .single()
-    if (error) console.error('Error cargando empresa:', error.message)
-    setEmpresaId(data?.empresa_id ?? null)
+
+    if (error) {
+      console.error('Error cargando empresa:', error.message)
+      if (!cached) setLoading(false)
+      return
+    }
+
+    const id = data?.empresa_id ?? null
+    if (id) localStorage.setItem(EMPRESA_CACHE_KEY, id)
+    setEmpresaId(id)
+    setLoading(false)
   }
 
   useEffect(() => {
@@ -44,8 +62,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await cargarEmpresa(session.user.id)
         } else {
           setEmpresaId(null)
+          localStorage.removeItem(EMPRESA_CACHE_KEY)
+          setLoading(false)
         }
-        setLoading(false)
 
         if (event !== 'INITIAL_SESSION') {
           if (session) {
