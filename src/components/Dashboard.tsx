@@ -14,8 +14,8 @@ const DIAS_SEMANA = [
 ];
 
 const AVATAR_COLORS = [
-  "bg-violet-600", "bg-blue-600", "bg-emerald-600",
-  "bg-amber-600",  "bg-rose-600",  "bg-teal-600",
+  "bg-avatar-1", "bg-avatar-2", "bg-avatar-3",
+  "bg-avatar-4", "bg-avatar-5", "bg-avatar-6",
 ];
 
 const SERVICIO_ICONS = ["✂️", "🪒", "💆", "🧴", "💈", "🪮"];
@@ -70,11 +70,11 @@ function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg"
 
 function StatusBadge({ estado }: { estado: string }) {
   return estado === "confirmada" ? (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-emerald-500/15 text-emerald-400 border border-emerald-500/20">
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-success/15 text-success border border-success/20">
       Confirmada
     </span>
   ) : (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-rose-500/15 text-rose-400 border border-rose-500/20">
+    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-danger/15 text-danger border border-danger/20">
       Cancelada
     </span>
   );
@@ -84,7 +84,7 @@ function ActiveBadge({ activo }: { activo: boolean }) {
   return (
     <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
       activo
-        ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/20"
+        ? "bg-success/15 text-success border-success/20"
         : "bg-surface-3 text-muted border-edge"
     }`}>
       {activo ? "Activo" : "Inactivo"}
@@ -147,7 +147,7 @@ function Toast({ message, type = "success" }: { message: string; type?: string }
   return (
     <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-surface-2 border border-edge text-white text-sm font-semibold px-5 py-3.5 rounded-2xl shadow-2xl">
       <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black ${
-        type === "success" ? "bg-emerald-500" : "bg-red-500"
+        type === "success" ? "bg-success" : "bg-danger"
       }`}>
         {type === "success" ? "✓" : "✕"}
       </span>
@@ -263,7 +263,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
             <Label>Confirmadas</Label>
             <p className="text-4xl font-black text-white mt-3">{confirmadas.length}</p>
           </div>
-          <div className="w-10 h-10 bg-emerald-500/20 border border-emerald-500/30 rounded-full flex items-center justify-center text-emerald-400 font-black text-lg flex-shrink-0">
+          <div className="w-10 h-10 bg-success/20 border border-success/30 rounded-full flex items-center justify-center text-success font-black text-lg flex-shrink-0">
             ✓
           </div>
         </div>
@@ -272,7 +272,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
             <Label>Canceladas</Label>
             <p className="text-4xl font-black text-white mt-3">{canceladas.length}</p>
           </div>
-          <div className="w-10 h-10 bg-red-500/20 border border-red-500/30 rounded-full flex items-center justify-center text-red-400 font-black text-lg flex-shrink-0">
+          <div className="w-10 h-10 bg-danger/20 border border-danger/30 rounded-full flex items-center justify-center text-danger font-black text-lg flex-shrink-0">
             ✕
           </div>
         </div>
@@ -335,7 +335,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                     <button
                       type="button"
                       onClick={() => cancelar(c.id)}
-                      className="w-8 h-8 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center text-red-400 text-sm font-bold hover:bg-red-500/30 transition"
+                      className="w-8 h-8 rounded-full bg-danger/20 border border-danger/30 flex items-center justify-center text-danger text-sm font-bold hover:bg-danger/30 transition"
                     >
                       ✕
                     </button>
@@ -822,7 +822,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                   className={`w-8 h-8 rounded-lg flex items-center justify-center text-sm transition border ${
                     h.activo
                       ? "bg-surface-3 border-edge text-muted hover:text-white"
-                      : "bg-emerald-500/15 border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/25"
+                      : "bg-success/15 border-success/30 text-success hover:bg-success/25"
                   }`}
                 >
                   {h.activo ? "⏸" : "▶"}
@@ -831,7 +831,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                   type="button"
                   onClick={() => eliminar(h.id)}
                   title="Eliminar"
-                  className="w-8 h-8 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-500/20 transition text-sm"
+                  className="w-8 h-8 bg-danger/10 border border-danger/20 rounded-lg flex items-center justify-center text-danger hover:bg-danger/20 transition text-sm"
                 >
                   🗑️
                 </button>
@@ -963,7 +963,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
         </div>
         <div className="bg-surface-2 border border-edge rounded-2xl p-5">
           <Label>Ingresos este mes (€)</Label>
-          <p className="text-4xl font-black text-emerald-400 mt-3">{stats.ingresosMes}€</p>
+          <p className="text-4xl font-black text-success mt-3">{stats.ingresosMes}€</p>
         </div>
         <div className="bg-surface-2 border border-edge rounded-2xl p-5">
           <Label>Servicio más pedido</Label>
@@ -1034,7 +1034,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                       <span className="text-sm font-bold text-white">{count}</span>
                     </div>
                     <div className="h-2 bg-surface-3 rounded-full overflow-hidden">
-                      <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${(count / max) * 100}%` }} />
+                      <div className="h-full bg-success rounded-full" style={{ width: `${(count / max) * 100}%` }} />
                     </div>
                   </div>
                 );
@@ -1070,7 +1070,7 @@ function AppointmentCard({ cita, onCancel }: { cita: any; onCancel?: (id: string
           </svg>
         </button>
         {onCancel && (
-          <button type="button" title="Cancelar" onClick={() => onCancel(cita.id)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 transition-colors">
+          <button type="button" title="Cancelar" onClick={() => onCancel(cita.id)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors">
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/>
             </svg>
@@ -1094,7 +1094,7 @@ function HistorialCard({ cita }: { cita: any }) {
       </div>
       <p className="text-xs text-muted mt-1 truncate">
         {serviceName}{" "}
-        <span className={isConfirmada ? "text-emerald-400" : "text-rose-400"}>
+        <span className={isConfirmada ? "text-success" : "text-danger"}>
           ({isConfirmada ? "Completado" : "Cancelado"})
         </span>
       </p>
@@ -1152,9 +1152,9 @@ function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string)
 
   const stats = [
     { label: "CITAS HOY",        value: citasHoy.length,              sub: `${confirmadas.length} confirmadas`, color: "text-white" },
-    { label: "INGRESOS",         value: `$${ingresosMes.toFixed(0)}`, sub: "Este mes",                          color: "text-emerald-400" },
+    { label: "INGRESOS",         value: `$${ingresosMes.toFixed(0)}`, sub: "Este mes",                          color: "text-success" },
     { label: "NUEVOS CLIENTES",  value: citasHoy.length,              sub: "Hoy",                               color: "text-white" },
-    { label: "CANCELACIONES",    value: cancelaciones,                sub: "Hoy",                               color: cancelaciones > 0 ? "text-rose-400" : "text-white" },
+    { label: "CANCELACIONES",    value: cancelaciones,                sub: "Hoy",                               color: cancelaciones > 0 ? "text-danger" : "text-white" },
   ];
 
   return (
@@ -1166,8 +1166,8 @@ function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string)
           <p className="text-sm text-muted mt-1">Gestión inteligente de tu flujo de trabajo hoy.</p>
         </div>
         <div className="hidden lg:flex items-center gap-2 mt-1.5">
-          <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-          <span className="text-xs text-green-400 font-semibold">WhatsApp Online</span>
+          <span className="w-2 h-2 bg-online rounded-full animate-pulse" />
+          <span className="text-xs text-online font-semibold">WhatsApp Online</span>
         </div>
       </div>
 
@@ -1187,7 +1187,7 @@ function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string)
         {/* PENDIENTE */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-amber-400 rounded-full shrink-0" />
+            <span className="w-2 h-2 bg-warn rounded-full shrink-0" />
             <span className="text-[10px] font-bold text-muted-light uppercase tracking-widest">Pendiente</span>
             <span className="ml-auto text-[10px] bg-surface-3 border border-edge text-muted px-2 py-0.5 rounded-full font-bold">{pendientes.length}</span>
           </div>
@@ -1201,7 +1201,7 @@ function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string)
         {/* CONFIRMADA */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-emerald-400 rounded-full shrink-0" />
+            <span className="w-2 h-2 bg-success rounded-full shrink-0" />
             <span className="text-[10px] font-bold text-muted-light uppercase tracking-widest">Confirmada</span>
             <span className="ml-auto text-[10px] bg-surface-3 border border-edge text-muted px-2 py-0.5 rounded-full font-bold">{confirmadas.length}</span>
           </div>
@@ -1215,7 +1215,7 @@ function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string)
         {/* HISTORIAL HOY */}
         <div>
           <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-zinc-500 rounded-full shrink-0" />
+            <span className="w-2 h-2 bg-neutral rounded-full shrink-0" />
             <span className="text-[10px] font-bold text-muted-light uppercase tracking-widest">Historial Hoy</span>
             <span className="ml-auto text-[10px] bg-surface-3 border border-edge text-muted px-2 py-0.5 rounded-full font-bold">{historial.length}</span>
           </div>
@@ -1369,7 +1369,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
                   type="button"
                   onClick={() => eliminar(v.id)}
                   title="Eliminar"
-                  className="w-8 h-8 bg-red-500/10 border border-red-500/20 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-500/20 transition text-sm"
+                  className="w-8 h-8 bg-danger/10 border border-danger/20 rounded-lg flex items-center justify-center text-danger hover:bg-danger/20 transition text-sm"
                 >
                   🗑️
                 </button>
@@ -1404,14 +1404,14 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
             placeholder="Ej. Vacaciones de verano"
           />
           {formError && (
-            <p className="text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-4 py-3">{formError}</p>
+            <p className="text-xs text-danger bg-danger/10 border border-danger/20 rounded-xl px-4 py-3">{formError}</p>
           )}
           {selBarbero && (
-            <div className="flex gap-3 bg-amber-500/10 border border-amber-500/20 rounded-xl px-4 py-3.5">
-              <span className="text-amber-400 text-sm flex-shrink-0 mt-0.5">🏖</span>
-              <p className="text-xs text-amber-300/80 leading-relaxed">
+            <div className="flex gap-3 bg-warn/10 border border-warn/20 rounded-xl px-4 py-3.5">
+              <span className="text-warn text-sm flex-shrink-0 mt-0.5">🏖</span>
+              <p className="text-xs text-warn/80 leading-relaxed">
                 El bot no mostrará disponibilidad de{" "}
-                <strong className="text-amber-300">{selBarbero.nombre}</strong> durante este período.
+                <strong className="text-warn">{selBarbero.nombre}</strong> durante este período.
               </p>
             </div>
           )}

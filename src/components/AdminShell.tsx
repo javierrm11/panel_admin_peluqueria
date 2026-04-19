@@ -140,7 +140,7 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
 
       {/* Bottom */}
       <div className="px-3 pb-5 space-y-2 border-t border-edge pt-4">
-        <button type="button" className="w-full flex items-center justify-center gap-2 bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 text-xs font-bold py-2.5 px-3 rounded-xl transition-colors">
+        <button type="button" className="w-full flex items-center justify-center gap-2 bg-online/10 hover:bg-online/20 text-online border border-online/20 text-xs font-bold py-2.5 px-3 rounded-xl transition-colors">
           <span className="text-sm">💬</span>
           Connect WhatsApp
         </button>
@@ -211,8 +211,8 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
           </button>
           <p className="font-black text-white text-sm">{activeLabel}</p>
           <div className="ml-auto flex items-center gap-2">
-            <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
-            <span className="text-xs text-green-400 font-semibold">WhatsApp Online</span>
+            <span className="w-2 h-2 bg-online rounded-full animate-pulse" />
+            <span className="text-xs text-online font-semibold">WhatsApp Online</span>
           </div>
         </header>
 

@@ -18,8 +18,27 @@
   --color-edge-light:   #2a2a40;
 
   /* Text */
+  --color-fg:           #ffffff;
   --color-muted:        #6b7280;
   --color-muted-light:  #9ca3af;
+
+  /* Overlay */
+  --color-overlay:      #000000;
+
+  /* Status */
+  --color-success:      #34d399;
+  --color-danger:       #f87171;
+  --color-warn:         #fbbf24;
+  --color-online:       #4ade80;
+  --color-neutral:      #71717a;
+
+  /* Avatars */
+  --color-avatar-1:     #7c3aed;
+  --color-avatar-2:     #2563eb;
+  --color-avatar-3:     #059669;
+  --color-avatar-4:     #d97706;
+  --color-avatar-5:     #e11d48;
+  --color-avatar-6:     #0d9488;
 }
 
 * {
@@ -28,8 +47,8 @@
 
 body {
   margin: 0;
-  background-color: #09090f;
-  color: #ffffff;
+  background-color: var(--color-base);
+  color: var(--color-fg);
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
