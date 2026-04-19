@@ -72,13 +72,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           localStorage.removeItem(EMPRESA_CACHE_KEY)
           setLoading(false)
           console.log('[Auth] loading=false (no session)')
-        }
-
-        if (event !== 'INITIAL_SESSION') {
-          if (session) {
-            console.log('[Auth] redirecting to /dashboard')
-            router.push('/dashboard')
-          } else {
+          if (event !== 'INITIAL_SESSION') {
             console.log('[Auth] redirecting to /login')
             router.push('/login')
           }
