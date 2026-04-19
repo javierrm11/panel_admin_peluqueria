@@ -1807,15 +1807,15 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
  
           {/* Legend */}
           <div className="space-y-2.5">
-            {donutSlices.map((s, i) => (
+            {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
               <div key={i} className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                  <span className="text-xs text-muted-light truncate">{s.nombre}</span>
-                </div>
-                <span className="text-xs font-bold text-white flex-shrink-0">
-                  {Math.round(s.pct * 100)}%
-                </span>
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                <span className="text-xs text-muted-light truncate">{s.nombre}</span>
+              </div>
+              <span className="text-xs font-bold text-white flex-shrink-0">
+                {Math.round(s.pct * 100)}%
+              </span>
               </div>
             ))}
             {donutSlices.length === 0 && (
