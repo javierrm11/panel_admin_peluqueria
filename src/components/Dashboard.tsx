@@ -1190,7 +1190,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
   const [form, setForm]             = useState({ dia_semana: 1, hora_inicio: "09:00", hora_fin: "18:00" });
 
   useEffect(() => {
-    supabase.from("barberos").select("id, nombre, especialidad").eq("activo", true).eq("empresa_id", empresaId).order("id")
+    supabase.from("barberos").select("id, nombre").eq("activo", true).eq("empresa_id", empresaId).order("id")
       .then(({ data }) => {
         setBarberos(data || []);
         if (data?.length) setSelBarbero(data[0]);

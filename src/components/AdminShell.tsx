@@ -136,7 +136,7 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
   return (
     <div className="flex flex-col h-full">
       {/* Logo */}
-      <div className="px-4 pt-5 pb-4 border-b border-edge">
+      <div className="px-4 pt-5 pb-2.5">
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center flex-shrink-0 text-white">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -176,6 +176,7 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
                   ? 'bg-surface-3 text-white'
                   : 'text-muted-light hover:bg-surface-2 hover:text-white'
               }`}
+              style={active ? { filter: 'drop-shadow(0px 0px 5px var(--color-surface-3))' } : undefined}
             >
               <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
                 active ? 'bg-brand text-white' : 'text-muted'
@@ -258,7 +259,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
   return (
     <div className="flex min-h-screen bg-base">
       {/* Desktop sidebar */}
-      <aside className="hidden lg:flex flex-col w-56 shrink-0 bg-surface border-r border-edge sticky top-0 h-screen">
+      <aside className="hidden lg:flex flex-col w-56 shrink-0 bg-base sticky top-0 h-screen">
         <SidebarContent seccion={seccion} onSeccionChange={onSeccionChange} />
       </aside>
 
@@ -286,7 +287,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
-        <header className="lg:hidden flex items-center gap-4 px-4 py-3 border-b border-edge bg-surface sticky top-0 z-30">
+        <header className="lg:hidden flex items-center gap-4 px-4 py-3 bg-base sticky top-0 z-30">
           <button
             type="button"
             onClick={() => setMobileOpen(true)}
@@ -303,7 +304,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
         </header>
 
         {/* Desktop topbar */}
-        <header className="hidden lg:flex items-center gap-4 px-6 py-3 border-b border-edge bg-surface sticky top-0 z-30">
+        <header className="hidden lg:flex items-center gap-4 px-6 py-3 bg-base sticky top-0 z-30">
           {/* Search */}
           <div className="flex items-center gap-2.5 bg-surface-2 border border-edge hover:border-edge-light rounded-xl px-4 py-2 flex-1 max-w-sm transition-colors">
             <span className="text-muted flex-shrink-0"><IconSearch /></span>
