@@ -1781,20 +1781,20 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
               <svg width="136" height="136" viewBox="0 0 136 136">
                 {/* Background circle */}
                 <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeW} />
-                {donutSlices.map((s, i) => (
+                {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
                   <circle
-                    key={i}
-                    cx={cx}
-                    cy={cy}
-                    r={r}
-                    fill="none"
-                    stroke={s.color}
-                    strokeWidth={strokeW}
-                    strokeDasharray={`${s.pct * circ} ${circ}`}
-                    strokeDashoffset={-s.dashOffset}
-                    strokeLinecap="round"
-                    transform={`rotate(-90 ${cx} ${cy})`}
-                    style={{ transition: "stroke-dasharray 0.6s ease" }}
+                  key={i}
+                  cx={cx}
+                  cy={cy}
+                  r={r}
+                  fill="none"
+                  stroke={s.color}
+                  strokeWidth={strokeW}
+                  strokeDasharray={`${s.pct * circ} ${circ}`}
+                  strokeDashoffset={-s.dashOffset}
+                  strokeLinecap="round"
+                  transform={`rotate(-90 ${cx} ${cy})`}
+                  style={{ transition: "stroke-dasharray 0.6s ease" }}
                   />
                 ))}
               </svg>
