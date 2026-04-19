@@ -76,11 +76,6 @@ export default function Login() {
             </button>
           </form>
         </div>
-
-        <p className="text-center text-xs text-muted mt-6">
-          ¿Sin cuenta?{' '}
-          <a href="/#pricing" className="text-brand hover:underline">Ver planes</a>
-        </p>
       </div>
     </div>
   );

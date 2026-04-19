@@ -29,22 +29,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   async function cargarEmpresa(userId: string) {
-    console.log('[Auth] cargarEmpresa start', userId)
     const cached = localStorage.getItem(EMPRESA_CACHE_KEY)
-    console.log('[Auth] cached empresaId:', cached)
     if (cached) {
       setEmpresaId(cached)
       setLoading(false)
-      console.log('[Auth] loading=false (from cache)')
     }
-
-    console.log('[Auth] querying perfiles...')
     const { data, error } = await supabase
       .from('perfiles')
       .select('empresa_id')
       .eq('user_id', userId)
       .single()
-    console.log('[Auth] perfiles result:', { data, error: error?.message })
 
     if (error) {
       console.error('[Auth] Error cargando empresa:', error.message)
@@ -56,7 +50,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (id) localStorage.setItem(EMPRESA_CACHE_KEY, id)
     setEmpresaId(id)
     setLoading(false)
-    console.log('[Auth] loading=false (from DB), empresaId:', id)
   }
 
   async function manejarSesion(currentSession: Session | null, event?: string) {
@@ -70,10 +63,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setEmpresaId(null)
     localStorage.removeItem(EMPRESA_CACHE_KEY)
     setLoading(false)
-    console.log('[Auth] loading=false (no session)')
 
     if (event && event !== 'INITIAL_SESSION') {
-      console.log('[Auth] redirecting to /login')
       router.replace('/login')
     }
   }
@@ -82,7 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let active = true
 
     async function inicializarSesion() {
-      console.log('[Auth] initializing getSession')
       const { data, error } = await supabase.auth.getSession()
       if (!active) return
 
@@ -94,16 +84,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return
       }
 
-      console.log('[Auth] getSession ready:', !!data.session)
       await manejarSesion(data.session, 'INITIAL_SESSION')
     }
 
     void inicializarSesion()
 
-    console.log('[Auth] registering onAuthStateChange')
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, nextSession) => {
       if (!active) return
-      console.log('[Auth] onAuthStateChange event:', event, 'session:', !!nextSession)
       void manejarSesion(nextSession, event)
     })
 
