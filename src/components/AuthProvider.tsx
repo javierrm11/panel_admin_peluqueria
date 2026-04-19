@@ -37,24 +37,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
-      setSession(session)
-      if (session) await cargarEmpresa(session.user.id)
-      setLoading(false)
-    })
-  }, [])
-
-  useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        if (event === 'INITIAL_SESSION') return
         setSession(session)
         if (session) {
           await cargarEmpresa(session.user.id)
-          router.push('/dashboard')
         } else {
           setEmpresaId(null)
-          router.push('/login')
+        }
+        setLoading(false)
+
+        if (event !== 'INITIAL_SESSION') {
+          if (session) {
+            router.push('/dashboard')
+          } else {
+            router.push('/login')
+          }
         }
       }
     )
