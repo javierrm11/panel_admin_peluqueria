@@ -29,21 +29,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter()
 
   async function cargarEmpresa(userId: string) {
-    // Usar caché para mostrar el dashboard de inmediato en recargas
+    console.log('[Auth] cargarEmpresa start', userId)
     const cached = localStorage.getItem(EMPRESA_CACHE_KEY)
+    console.log('[Auth] cached empresaId:', cached)
     if (cached) {
       setEmpresaId(cached)
       setLoading(false)
+      console.log('[Auth] loading=false (from cache)')
     }
 
+    console.log('[Auth] querying perfiles...')
     const { data, error } = await supabase
       .from('perfiles')
       .select('empresa_id')
       .eq('user_id', userId)
       .single()
+    console.log('[Auth] perfiles result:', { data, error: error?.message })
 
     if (error) {
-      console.error('Error cargando empresa:', error.message)
+      console.error('[Auth] Error cargando empresa:', error.message)
       if (!cached) setLoading(false)
       return
     }
@@ -52,11 +56,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (id) localStorage.setItem(EMPRESA_CACHE_KEY, id)
     setEmpresaId(id)
     setLoading(false)
+    console.log('[Auth] loading=false (from DB), empresaId:', id)
   }
 
   useEffect(() => {
+    console.log('[Auth] registering onAuthStateChange')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('[Auth] onAuthStateChange event:', event, 'session:', !!session)
         setSession(session)
         if (session) {
           await cargarEmpresa(session.user.id)
@@ -64,12 +71,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setEmpresaId(null)
           localStorage.removeItem(EMPRESA_CACHE_KEY)
           setLoading(false)
+          console.log('[Auth] loading=false (no session)')
         }
 
         if (event !== 'INITIAL_SESSION') {
           if (session) {
+            console.log('[Auth] redirecting to /dashboard')
             router.push('/dashboard')
           } else {
+            console.log('[Auth] redirecting to /login')
             router.push('/login')
           }
         }
