@@ -695,7 +695,7 @@ function BarberoCard({
           className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center"
           style={{ background: `linear-gradient(145deg, ${from} 0%, ${to} 100%)` }}
         >
-          <span className="text-xl font-black select-none" style={{ color: "rgba(255,255,255,0.3)" }}>
+          <span className="text-xl font-black select-none" style={{ color: "rgba(231, 231, 231, 0.87)" }}>
             {initials}
           </span>
         </div>
@@ -735,7 +735,7 @@ function BarberoCard({
       <div className="hidden md:flex flex-col">
         <div
           className="relative h-48 flex items-center justify-center flex-shrink-0"
-          style={{ background: `linear-gradient(145deg, ${from} 0%, ${to} 100%)` }}
+          style={{ background: `linear-gradient(145deg, ${from} 0%, ${from} 100%)` }}
         >
           <span className="text-6xl font-black select-none" style={{ color: "rgba(255,255,255,0.15)" }}>
             {initials}
@@ -937,7 +937,7 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
               <div className="space-y-4">
                 {topBarbero ? (
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg flex-shrink-0" style={{ background: `linear-gradient(135deg, ${barberoGradient(topBarbero)[0]}, ${barberoGradient(topBarbero)[1]})` }}>
+                    <div className="w-9 h-9 rounded-lg flex-shrink-0" style={{ background: `linear-gradient(135deg, ${barberoGradient(topBarbero)[0]}, ${barberoGradient(topBarbero)[0]})` }}>
                       <div className="w-full h-full flex items-center justify-center text-xs font-black text-fg/60">
                         {topBarbero.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
@@ -1170,7 +1170,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
           <div className="relative bg-surface-2 border border-edge rounded-2xl overflow-hidden">
             <div
               className="absolute inset-0 opacity-10"
-              style={{ background: `linear-gradient(135deg, ${SERVICE_VISUAL[0].from}, ${SERVICE_VISUAL[0].to})` }}
+              style={{ background: `linear-gradient(135deg, ${SERVICE_VISUAL[0].from}, ${SERVICE_VISUAL[0].from})` }}
             />
             <div className="relative p-5">
               <p className="text-[9px] font-bold text-brand uppercase tracking-widest">Servicio Estrella</p>
@@ -1204,7 +1204,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
                 >
                   <div
                     className="w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${visual.from}, ${visual.to})` }}
+                    style={{ background: `linear-gradient(135deg, ${visual.from}, ${visual.from})` }}
                   >
                     {visual.icon}
                   </div>
@@ -1280,7 +1280,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
                     <div className="flex items-center gap-3 min-w-0 pr-4">
                       <div
                         className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                        style={{ background: `linear-gradient(135deg, ${visual.from}, ${visual.to})` }}
+                        style={{ background: `linear-gradient(135deg, ${visual.from}, ${visual.from})` }}
                       >
                         {visual.icon}
                       </div>
@@ -2061,7 +2061,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
           <div className="flex items-center gap-2 mt-3">
             <div className="flex -space-x-1.5">
               {["A","B","C"].map((l, i) => (
-                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-fg ${AVATAR_COLORS[i]}`}>{l}</div>
+                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-brand-dim ${AVATAR_COLORS[i]}`}>{l}</div>
               ))}
               <div className="w-5 h-5 rounded-full border-2 border-surface-2 bg-surface-3 flex items-center justify-center text-[8px] font-bold text-muted">+{Math.max(0, stats.nuevosClientes - 3)}</div>
             </div>
@@ -2199,7 +2199,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
           <div className="flex items-center gap-2 mt-3">
             <div className="flex -space-x-1.5">
               {["A","B","C"].map((l, i) => (
-                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-fg ${AVATAR_COLORS[i]}`}>{l}</div>
+                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-brand-dim ${AVATAR_COLORS[i]}`}>{l}</div>
               ))}
               <div className="w-5 h-5 rounded-full border-2 border-surface-2 bg-surface-3 flex items-center justify-center text-[8px] font-bold text-muted">+{Math.max(0, stats.nuevosClientes - 3)}</div>
             </div>
