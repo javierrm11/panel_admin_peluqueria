@@ -271,32 +271,157 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
 
   return (
     <div>
-      {/* Page header */}
-      <div className="flex items-start justify-between mb-7">
-        <div>
-          <h2 className="text-3xl font-black text-white">Gestión de Citas</h2>
-          <p className="text-sm text-muted mt-1">Administra el flujo de trabajo de hoy y visualiza las reservas de la semana.</p>
+      {/* ── MOBILE layout ── */}
+      <div className="md:hidden">
+        <p className="text-sm text-muted mb-5">Gestiona tu agenda nocturna.</p>
+
+        {/* PRÓXIMA CITA card */}
+        <div className="bg-surface-2 border border-edge rounded-2xl p-5 mb-4 relative overflow-hidden">
+          <Label>Próxima Cita</Label>
+          {proxima ? (
+            <div className="mt-2 pr-12">
+              <p className="text-2xl font-black text-white leading-tight">
+                {proxima.hora?.substring(0, 5)} — {proxima.servicios?.nombre}
+              </p>
+              <p className="text-xs text-muted mt-2">
+                Cliente: {proxima.clientes?.nombre || proxima.clientes?.telefono || "—"} • Barber: {proxima.barberos?.nombre}
+              </p>
+            </div>
+          ) : (
+            <p className="text-xl font-black text-muted mt-2">Sin citas confirmadas</p>
+          )}
+          <div className="absolute top-4 right-4 w-10 h-10 bg-surface-3 border border-edge rounded-xl flex items-center justify-center text-brand flex-shrink-0">
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2zM5 16l.75 2.25L8 19l-2.25.75L5 22l-.75-2.25L2 19l2.25-.75L5 16zM19 16l.75 2.25L22 19l-2.25.75L19 22l-.75-2.25L16 19l2.25-.75L19 16z"/>
+            </svg>
+          </div>
         </div>
-        <div className="flex bg-surface-2 border border-edge rounded-2xl p-1 gap-0.5">
-          {VISTAS_CITAS.map(v => (
-            <button
-              type="button"
-              key={v.id}
-              onClick={() => setVista(v.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
-                vista === v.id
-                  ? "bg-brand text-white shadow"
-                  : "text-muted hover:text-white"
-              }`}
-            >
-              {v.label}
-            </button>
-          ))}
+
+        {/* Stats: Confirmadas + Canceladas */}
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 bg-success/15 border border-success/20 rounded-lg flex items-center justify-center text-success flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Confirmadas</p>
+            </div>
+            <p className="text-3xl font-black text-white">{confirmadas.length}</p>
+          </div>
+          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
+            <div className="flex items-center gap-2 mb-2">
+              <div className="w-6 h-6 bg-danger/15 border border-danger/20 rounded-lg flex items-center justify-center text-danger flex-shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Canceladas</p>
+            </div>
+            <p className="text-3xl font-black text-white">{canceladas.length}</p>
+          </div>
         </div>
+
+        {/* Filtrar */}
+        <div className="flex justify-end mb-3">
+          <button
+            type="button"
+            className="flex items-center gap-1.5 text-xs font-bold text-muted hover:text-white transition"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M3 6h18M7 12h10M10 18h4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Filtrar
+          </button>
+        </div>
+
+        {/* Appointment list */}
+        {loading ? <Spinner /> : citas.length === 0 ? (
+          <Empty msg="No hay citas para este período" />
+        ) : (
+          <div className="space-y-2">
+            {citas.map(c => {
+              const cancelada = c.estado === "cancelada";
+              const hora24 = c.hora?.substring(0, 5) || "—";
+              const duracion = c.servicios?.duracion_minutos;
+              const mstMap: Record<string, { label: string; cls: string }> = {
+                confirmada: { label: "CONFIRMADA", cls: "bg-success text-white border-success/50" },
+                pendiente:  { label: "EN ESPERA",  cls: "bg-surface-3 text-muted border-edge" },
+                cancelada:  { label: "CANCELADA",  cls: "bg-danger/15 text-danger border-danger/30" },
+              };
+              const mst = mstMap[c.estado] ?? mstMap.pendiente;
+              return (
+                <div key={c.id} className={`bg-surface-2 border border-edge rounded-2xl p-4 transition-opacity ${cancelada ? "opacity-50" : ""}`}>
+                  <div className="flex items-center gap-3">
+                    {/* Time + duration */}
+                    <div className="flex-shrink-0 w-14 text-center">
+                      <p className={`text-[17px] font-black text-white leading-tight ${cancelada ? "line-through" : ""}`}>{hora24}</p>
+                      {duracion && <p className="text-[9px] font-bold text-muted uppercase tracking-wide mt-0.5">{duracion} min</p>}
+                    </div>
+                    {/* Service + Barber */}
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm font-bold text-white truncate ${cancelada ? "line-through" : ""}`}>
+                        {c.servicios?.nombre}
+                      </p>
+                      <div className="flex items-center gap-1 mt-0.5">
+                        <svg className="w-3 h-3 text-muted flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path d="M6 2l4 4-4 4M14 6H6M18 2l4 4-4 4M14 18h4M6 14l4 4-4 4M10 18H6" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        <p className="text-[10px] text-muted truncate">Barber: {c.barberos?.nombre}</p>
+                      </div>
+                    </div>
+                    {/* Status */}
+                    <span className={`text-[9px] font-bold border px-2 py-1 rounded-lg flex-shrink-0 uppercase tracking-wide ${mst.cls}`}>
+                      {mst.label}
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* FAB */}
+        <button
+          type="button"
+          className="fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand rounded-full shadow-2xl flex items-center justify-center text-white hover:bg-brand/90 active:scale-95 transition-transform"
+          aria-label="Nueva cita"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
+          </svg>
+        </button>
       </div>
 
-      {/* Stat cards */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      {/* ── DESKTOP layout ── */}
+      <div className="hidden md:block">
+        {/* Page header */}
+        <div className="flex items-start justify-between mb-7">
+          <div>
+            <h2 className="text-3xl font-black text-white">Gestión de Citas</h2>
+            <p className="text-sm text-muted mt-1">Administra el flujo de trabajo de hoy y visualiza las reservas de la semana.</p>
+          </div>
+          <div className="flex bg-surface-2 border border-edge rounded-2xl p-1 gap-0.5">
+            {VISTAS_CITAS.map(v => (
+              <button
+                type="button"
+                key={v.id}
+                onClick={() => setVista(v.id)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
+                  vista === v.id
+                    ? "bg-brand text-white shadow"
+                    : "text-muted hover:text-white"
+                }`}
+              >
+                {v.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Stat cards */}
+        <div className="grid grid-cols-3 gap-4 mb-6">
         {/* Next appointment */}
         <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-start justify-between">
           <div className="flex-1 min-w-0">
@@ -506,6 +631,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
           </>
         )}
       </div>
+      </div> {/* end hidden md:block */}
     </div>
   );
 }
@@ -561,57 +687,97 @@ function BarberoCard({
     .toUpperCase();
 
   return (
-    <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden flex flex-col">
-      {/* Image / gradient avatar area */}
-      <div
-        className="relative h-48 flex items-center justify-center flex-shrink-0"
-        style={{ background: `linear-gradient(145deg, ${from} 0%, ${to} 100%)` }}
-      >
-        <span className="text-6xl font-black select-none" style={{ color: "rgba(255,255,255,0.15)" }}>
-          {initials}
-        </span>
-        {/* Status badge */}
-        <div className={`absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm border ${
-          barbero.activo
-            ? "bg-success/20 border-success/30 text-success"
-            : "bg-surface-3/70 border-edge text-muted"
-        }`}>
-          <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${barbero.activo ? "bg-success" : "bg-muted"}`} />
-          {barbero.activo ? "Active" : "Inactive"}
+    <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
+      {/* Mobile: horizontal list row */}
+      <div className="flex md:hidden items-start gap-3 p-4">
+        {/* Avatar */}
+        <div
+          className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center"
+          style={{ background: `linear-gradient(145deg, ${from} 0%, ${to} 100%)` }}
+        >
+          <span className="text-xl font-black select-none" style={{ color: "rgba(255,255,255,0.3)" }}>
+            {initials}
+          </span>
+        </div>
+        {/* Info + toggle */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="min-w-0">
+              <p className="font-bold text-white text-[15px] leading-tight truncate">{barbero.nombre}</p>
+              <p className="text-[10px] text-muted uppercase tracking-wider mt-0.5">Barbero Profesional</p>
+              <p className="text-xs text-muted mt-1">★ 5.0</p>
+            </div>
+            <Toggle checked={barbero.activo} onChange={() => onToggle(barbero)} />
+          </div>
+          <div className="mt-3 pt-3 border-t border-edge flex items-center justify-between">
+            <div>
+              <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Estado Actual</p>
+              <p className={`text-sm font-semibold mt-0.5 ${barbero.activo ? "text-success" : "text-muted"}`}>
+                {barbero.activo ? "Disponible" : "Ausente"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => onEdit(barbero)}
+              title="Editar"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Card body */}
-      <div className="p-4 flex flex-col flex-1">
-        <p className="font-bold text-white text-[15px] leading-tight">{barbero.nombre}</p>
-        <p className="text-xs text-muted mt-0.5">Barbero Profesional</p>
-
-        {/* Actions */}
-        <div className="flex items-center gap-1.5 mt-4">
-          <button
-            type="button"
-            onClick={() => onEdit(barbero)}
-            title="Editar"
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            title="Historial"
-            className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <polyline points="23 4 23 10 17 10" />
-              <polyline points="1 20 1 14 7 14" />
-              <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </button>
-          <div className="ml-auto">
-            <Toggle checked={barbero.activo} onChange={() => onToggle(barbero)} />
+      {/* Desktop: vertical card */}
+      <div className="hidden md:flex flex-col">
+        <div
+          className="relative h-48 flex items-center justify-center flex-shrink-0"
+          style={{ background: `linear-gradient(145deg, ${from} 0%, ${to} 100%)` }}
+        >
+          <span className="text-6xl font-black select-none" style={{ color: "rgba(255,255,255,0.15)" }}>
+            {initials}
+          </span>
+          <div className={`absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm border ${
+            barbero.activo
+              ? "bg-success/20 border-success/30 text-success"
+              : "bg-surface-3/70 border-edge text-muted"
+          }`}>
+            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${barbero.activo ? "bg-success" : "bg-muted"}`} />
+            {barbero.activo ? "Active" : "Inactive"}
+          </div>
+        </div>
+        <div className="p-4 flex flex-col flex-1">
+          <p className="font-bold text-white text-[15px] leading-tight">{barbero.nombre}</p>
+          <p className="text-xs text-muted mt-0.5">Barbero Profesional</p>
+          <div className="flex items-center gap-1.5 mt-4">
+            <button
+              type="button"
+              onClick={() => onEdit(barbero)}
+              title="Editar"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              title="Historial"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <polyline points="23 4 23 10 17 10" />
+                <polyline points="1 20 1 14 7 14" />
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <div className="ml-auto">
+              <Toggle checked={barbero.activo} onChange={() => onToggle(barbero)} />
+            </div>
           </div>
         </div>
       </div>
@@ -708,13 +874,14 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
       {/* Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
-          <Label>Gestión de Personal</Label>
-          <h2 className="text-3xl font-black text-white mt-1">Nuestros Maestros</h2>
+          <Label>Nuestros maestros de la navaja</Label>
+          <h2 className="text-3xl font-black text-white mt-1">Equipo de Barberos</h2>
         </div>
+        {/* Desktop: header button */}
         <button
           type="button"
           onClick={() => abrirModal()}
-          className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2.5 rounded-2xl text-sm font-semibold transition shadow-lg shadow-brand-glow"
+          className="hidden md:flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2.5 rounded-2xl text-sm font-semibold transition shadow-lg shadow-brand-glow"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
             <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M12 3a4 4 0 110 8 4 4 0 010-8zM19 8v6M22 11h-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -723,20 +890,32 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
         </button>
       </div>
 
+      {/* Mobile FAB */}
+      <button
+        type="button"
+        onClick={() => abrirModal()}
+        aria-label="Nuevo Barbero"
+        className="md:hidden fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand hover:bg-brand-hover text-white rounded-full flex items-center justify-center shadow-xl shadow-brand-glow transition-colors"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+        </svg>
+      </button>
+
       {loading ? <Spinner /> : (
         <>
           {/* Card grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
             {barberos.map(b => (
               <BarberoCard key={b.id} barbero={b} onEdit={abrirModal} onToggle={toggleActivo} />
             ))}
-            {/* Add new member */}
+            {/* Add new member - desktop only (mobile uses FAB) */}
             <button
               type="button"
               onClick={() => abrirModal()}
-              className="bg-surface-2 border border-dashed border-edge-light rounded-2xl flex flex-col items-center justify-center gap-3 p-6 hover:border-brand/40 hover:bg-surface-3/50 transition-colors min-h-[240px]"
+              className="hidden md:flex bg-surface-2 border border-dashed border-edge-light rounded-2xl flex-col items-center justify-center gap-3 p-6 hover:border-brand/40 hover:bg-surface-3/50 transition-colors min-h-[240px]"
             >
-              <div className="w-12 h-12 rounded-full bg-surface-3 border border-edge flex items-center justify-center text-muted group-hover:text-white transition-colors">
+              <div className="w-12 h-12 rounded-full bg-surface-3 border border-edge flex items-center justify-center text-muted transition-colors">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                   <path d="M12 5v14M5 12h14" strokeLinecap="round" />
                 </svg>
@@ -948,27 +1127,125 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
 
   const RANK_COLORS = ["bg-brand", "bg-success", "bg-warn"];
 
+  const topServicioData = topServicio
+    ? servicios.find(s => s.nombre === topServicio.nombre)
+    : null;
+
   return (
     <div>
       {/* Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
           <h2 className="text-4xl font-black text-white italic">Carta de Servicios</h2>
-          <p className="text-sm text-muted mt-2 max-w-md leading-relaxed">
+          <p className="hidden md:block text-sm text-muted mt-2 max-w-md leading-relaxed">
             Define y gestiona la experiencia premium que ofreces a tus clientes. Ajusta tiempos, precios y estilos con precisión.
           </p>
         </div>
+        {/* Desktop: header button */}
         <button
           type="button"
           onClick={() => abrirModal()}
-          className="flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-white px-5 py-2.5 rounded-2xl text-sm font-semibold transition flex-shrink-0"
+          className="hidden md:flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-white px-5 py-2.5 rounded-2xl text-sm font-semibold transition flex-shrink-0"
         >
           + Nuevo Servicio
         </button>
       </div>
 
-      {/* Two-column layout */}
-      <div className="flex gap-5 items-start">
+      {/* Mobile FAB */}
+      <button
+        type="button"
+        onClick={() => abrirModal()}
+        aria-label="Nuevo Servicio"
+        className="md:hidden fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand hover:bg-brand-hover text-white rounded-full flex items-center justify-center shadow-xl shadow-brand-glow transition-colors"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
+        </svg>
+      </button>
+
+      {/* Mobile view */}
+      <div className="md:hidden space-y-4">
+        {/* Servicio Estrella featured card */}
+        {topServicioData && (
+          <div className="relative bg-surface-2 border border-edge rounded-2xl overflow-hidden">
+            <div
+              className="absolute inset-0 opacity-10"
+              style={{ background: `linear-gradient(135deg, ${SERVICE_VISUAL[0].from}, ${SERVICE_VISUAL[0].to})` }}
+            />
+            <div className="relative p-5">
+              <p className="text-[9px] font-bold text-brand uppercase tracking-widest">Servicio Estrella</p>
+              <div className="flex items-start justify-between mt-2 gap-3">
+                <div className="min-w-0">
+                  <h3 className="text-xl font-black text-white leading-tight">{topServicioData.nombre}</h3>
+                  <p className="text-xs text-muted mt-1.5 leading-relaxed">Tu servicio más popular este mes</p>
+                </div>
+                <div className="text-right flex-shrink-0">
+                  <p className="text-2xl font-black text-brand">{Number(topServicioData.precio).toFixed(0)}€</p>
+                  <p className="text-[10px] text-muted mt-1">{topServicioData.duracion_minutos} min</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Services flat list */}
+        {servicios.length === 0 ? (
+          <Empty msg="No hay servicios registrados" />
+        ) : (
+          <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
+            {servicios.map((s, i) => {
+              const visual = SERVICE_VISUAL[i % SERVICE_VISUAL.length];
+              return (
+                <div
+                  key={s.id}
+                  className={`flex items-center gap-3 px-4 py-3.5 ${
+                    i < servicios.length - 1 ? "border-b border-edge/50" : ""
+                  }`}
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0"
+                    style={{ background: `linear-gradient(135deg, ${visual.from}, ${visual.to})` }}
+                  >
+                    {visual.icon}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-bold text-white truncate">{s.nombre}</p>
+                    <p className="text-[10px] text-muted mt-0.5">· {s.duracion_minutos} min</p>
+                  </div>
+                  <p className="text-base font-black text-white flex-shrink-0">{Number(s.precio).toFixed(0)}€</p>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => abrirModal(s)}
+                      title="Editar"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => eliminar(s.id)}
+                      title="Eliminar"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <polyline points="3 6 5 6 21 6" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Desktop two-column layout */}
+      <div className="hidden md:flex gap-5 items-start">
         {/* Main list */}
         <div className="flex-1 min-w-0">
           <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
@@ -1254,103 +1531,203 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
   return (
     <div>
       {/* Page header */}
-      <div className="flex items-center justify-between mb-8">
-        <h1 className="text-xl font-black tracking-widest text-white uppercase">
-          Configuración de Horarios
-        </h1>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={copiarSemana}
-            className="flex items-center gap-2 bg-surface-2 border border-edge text-muted-light hover:text-white hover:border-edge-light px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth="1.5" />
-            </svg>
-            Copiar semana
-          </button>
-          <button
-            type="button"
-            onClick={guardarCambios}
-            className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-lg shadow-brand-glow"
-          >
-            Guardar cambios
-          </button>
-        </div>
+      <div className="mb-6">
+        <h2 className="text-3xl font-black text-white">Horarios</h2>
+        <p className="text-sm text-muted mt-1">Gestiona la disponibilidad de tu equipo para las próximas sesiones.</p>
       </div>
 
       {/* Barbero selector */}
       {barberos.length > 0 && (
-        <div className="mb-8">
-          <Label>Seleccionar Barbero</Label>
-          <div className="flex gap-3 flex-wrap mt-3">
-            {barberos.map(b => (
+        <div className="mb-6">
+          {/* Mobile: horizontal scroll chips */}
+          <div className="flex gap-2 overflow-x-auto pb-1 md:hidden">
+            {barberos.map(b => {
+              const short = b.nombre.split(" ").map((w: string, i: number) => i === 0 ? w : w[0] + ".").join(" ");
+              return (
+                <button
+                  type="button"
+                  key={b.id}
+                  onClick={() => setSelBarbero(b)}
+                  className={`flex items-center gap-2 px-3 py-2 rounded-full border flex-shrink-0 transition-colors ${
+                    selBarbero?.id === b.id
+                      ? "border-brand bg-brand/10 text-white"
+                      : "border-edge bg-surface-2 text-muted hover:border-edge-light"
+                  }`}
+                >
+                  <Avatar name={b.nombre} size="sm" />
+                  <span className="text-xs font-bold whitespace-nowrap">{short}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Desktop: card selector */}
+          <div className="hidden md:flex gap-3 flex-wrap">
+            <Label>Seleccionar Barbero</Label>
+            <div className="flex gap-3 flex-wrap w-full mt-2">
+              {barberos.map(b => (
+                <button
+                  type="button"
+                  key={b.id}
+                  onClick={() => setSelBarbero(b)}
+                  className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border transition w-24 ${
+                    selBarbero?.id === b.id
+                      ? "border-brand bg-brand/10"
+                      : "border-edge bg-surface-2 hover:border-edge-light"
+                  }`}
+                >
+                  <div className="relative">
+                    <Avatar name={b.nombre} size="lg" />
+                    {selBarbero?.id === b.id && (
+                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-base" />
+                    )}
+                  </div>
+                  <span className="text-[11px] font-bold text-white text-center leading-tight">{b.nombre}</span>
+                  <span className="text-[9px] text-brand uppercase font-bold tracking-wide leading-tight">
+                    {b.especialidad || "Barbero"}
+                  </span>
+                </button>
+              ))}
               <button
                 type="button"
-                key={b.id}
-                onClick={() => setSelBarbero(b)}
-                className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border transition w-24 ${
-                  selBarbero?.id === b.id
-                    ? "border-brand bg-brand/10"
-                    : "border-edge bg-surface-2 hover:border-edge-light"
-                }`}
+                className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-dashed border-edge w-24 hover:border-edge-light transition"
               >
-                <div className="relative">
-                  <Avatar name={b.nombre} size="lg" />
-                  {selBarbero?.id === b.id && (
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-base" />
-                  )}
+                <div className="w-11 h-11 rounded-full border-2 border-dashed border-edge flex items-center justify-center text-muted text-lg">
+                  +
                 </div>
-                <span className="text-[11px] font-bold text-white text-center leading-tight">{b.nombre}</span>
-                <span className="text-[9px] text-brand uppercase font-bold tracking-wide leading-tight">
-                  {b.especialidad || "Barbero"}
-                </span>
+                <span className="text-[11px] text-muted">Añadir</span>
               </button>
-            ))}
-            <button
-              type="button"
-              className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-dashed border-edge w-24 hover:border-edge-light transition"
-            >
-              <div className="w-11 h-11 rounded-full border-2 border-dashed border-edge flex items-center justify-center text-muted text-lg">
-                +
-              </div>
-              <span className="text-[11px] text-muted">Añadir</span>
-            </button>
+            </div>
           </div>
         </div>
       )}
 
+      {/* Desktop action buttons */}
+      <div className="hidden md:flex items-center justify-end gap-2 mb-6">
+        <button
+          type="button"
+          onClick={copiarSemana}
+          className="flex items-center gap-2 bg-surface-2 border border-edge text-muted-light hover:text-white hover:border-edge-light px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition"
+        >
+          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth="1.5" />
+          </svg>
+          Copiar semana
+        </button>
+        <button
+          type="button"
+          onClick={guardarCambios}
+          className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-lg shadow-brand-glow"
+        >
+          Guardar cambios
+        </button>
+      </div>
+
+      {/* Mobile FAB */}
+      <button
+        type="button"
+        onClick={guardarCambios}
+        aria-label="Guardar cambios"
+        className="md:hidden fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand hover:bg-brand-hover text-white rounded-full flex items-center justify-center shadow-xl shadow-brand-glow transition-colors"
+      >
+        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+      </button>
+
       {/* Weekly availability */}
       {selBarbero && (
         <>
-          <div className="flex items-end justify-between mb-5">
-            <div>
-              <h2 className="text-2xl font-black text-white">Disponibilidad Semanal</h2>
-              <p className="text-sm text-muted mt-1">
-                Configura los turnos y descansos para {selBarbero.nombre}.
-              </p>
-            </div>
+          {/* Desktop title */}
+          <div className="hidden md:block mb-5">
+            <h2 className="text-2xl font-black text-white">Disponibilidad Semanal</h2>
+            <p className="text-sm text-muted mt-1">Configura los turnos y descansos para {selBarbero.nombre}.</p>
           </div>
 
-          <div className="space-y-2">
+          {/* Mobile: card per day */}
+          <div className="space-y-3 md:hidden">
             {DIAS_SEMANA.map(dia => {
               const slots = horarios.filter(h => h.dia_semana === dia.id);
               const activo = slots.length > 0;
+              return (
+                <div
+                  key={dia.id}
+                  className={`rounded-2xl border overflow-hidden transition ${
+                    activo ? "bg-surface-2 border-edge" : "bg-surface-2/40 border-edge/40"
+                  }`}
+                >
+                  <div className={`flex items-center justify-between px-4 py-3 border-l-4 ${activo ? "border-brand" : "border-edge/30"}`}>
+                    <p className={`text-base font-black ${activo ? "text-white" : "text-muted"}`}>{dia.label}</p>
+                    <span className={`text-[10px] font-bold uppercase tracking-widest ${activo ? "text-success" : "text-muted"}`}>
+                      {activo ? "Abierto" : "Cerrado"}
+                    </span>
+                  </div>
+                  {activo && (
+                    <div className="px-4 pb-3 space-y-2 pt-1">
+                      {slots.map(h => (
+                        <div key={h.id} className="flex items-center gap-3 bg-surface-3 border border-edge rounded-xl px-3 py-2.5">
+                          <div className="w-6 h-6 rounded-full bg-surface-2 border border-edge flex items-center justify-center flex-shrink-0">
+                            <svg className="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
+                              <path strokeLinecap="round" d="M12 6v6l4 2" strokeWidth="1.5" />
+                            </svg>
+                          </div>
+                          <span
+                            className="flex-1 text-white text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
+                            onClick={() => abrirModal(h)}
+                          >
+                            {h.hora_inicio?.substring(0, 5)} &nbsp;—&nbsp; {h.hora_fin?.substring(0, 5)}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => eliminarSlot(h.id)}
+                            className="w-7 h-7 flex items-center justify-center text-muted hover:text-danger transition"
+                          >
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="1.5" />
+                            </svg>
+                          </button>
+                        </div>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => abrirModal(null, dia.id)}
+                        className="w-full text-xs text-muted hover:text-white font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 py-2 transition"
+                      >
+                        + Añadir turno
+                      </button>
+                    </div>
+                  )}
+                  {!activo && (
+                    <div className="px-4 pb-3 pt-1">
+                      <button
+                        type="button"
+                        onClick={() => abrirModal(null, dia.id)}
+                        className="text-[11px] text-brand border border-brand/30 bg-brand/10 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition font-bold uppercase tracking-wider"
+                      >
+                        Habilitar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
 
+          {/* Desktop: horizontal row layout */}
+          <div className="hidden md:block space-y-2">
+            {DIAS_SEMANA.map(dia => {
+              const slots = horarios.filter(h => h.dia_semana === dia.id);
+              const activo = slots.length > 0;
               return (
                 <div
                   key={dia.id}
                   className={`flex items-center gap-4 border rounded-xl px-5 py-3.5 transition ${
-                    activo
-                      ? "bg-surface-2 border-edge"
-                      : "bg-surface-2/50 border-edge/50"
+                    activo ? "bg-surface-2 border-edge" : "bg-surface-2/50 border-edge/50"
                   }`}
                 >
-                  {/* Day label */}
                   <div className={`w-32 flex-shrink-0 pl-3 border-l-2 ${activo ? "border-brand" : "border-edge/40"}`}>
-                    <p className={`text-sm font-bold ${activo ? "text-white" : "text-muted"}`}>
-                      {dia.label}
-                    </p>
+                    <p className={`text-sm font-bold ${activo ? "text-white" : "text-muted"}`}>{dia.label}</p>
                     {activo ? (
                       <p className="text-[10px] text-success font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
@@ -1363,18 +1740,11 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                       </p>
                     )}
                   </div>
-
-                  {/* Slots */}
                   <div className="flex-1 flex items-center gap-2 flex-wrap min-h-[36px]">
                     {activo ? (
                       <>
                         {slots.map(h => (
-                          <SlotTime
-                            key={h.id}
-                            h={h}
-                            onEdit={() => abrirModal(h)}
-                            onDelete={() => eliminarSlot(h.id)}
-                          />
+                          <SlotTime key={h.id} h={h} onEdit={() => abrirModal(h)} onDelete={() => eliminarSlot(h.id)} />
                         ))}
                         <button
                           type="button"
@@ -1425,8 +1795,8 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
             })}
           </div>
 
-          {/* Bottom insight cards */}
-          <div className="grid grid-cols-2 gap-4 mt-8">
+          {/* Bottom insight cards - desktop only */}
+          <div className="hidden md:grid grid-cols-2 gap-4 mt-8">
             <div className="relative bg-surface-2 border border-edge rounded-2xl p-6 overflow-hidden">
               <span className="inline-block text-[9px] text-brand font-bold uppercase tracking-widest border border-brand/30 bg-brand/10 px-2.5 py-1 rounded-full">
                 Tip de Optimización
@@ -1629,15 +1999,147 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
   return (
     <div>
       {/* Header */}
-      <div className="mb-8">
-        <h2 className="text-4xl font-black text-white">Estadísticas Avanzadas</h2>
-        <p className="text-sm text-muted mt-1.5 max-w-lg">
+      <div className="mb-6 md:mb-8">
+        <Label>Dashboard de rendimiento</Label>
+        <h2 className="text-3xl md:text-4xl font-black text-white mt-1">Estadísticas Avanzadas</h2>
+        <p className="hidden md:block text-sm text-muted mt-1.5 max-w-lg">
           Análisis detallado del rendimiento de tu atelier durante el último periodo.
         </p>
       </div>
- 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-4 gap-4 mb-6">
+
+      {/* ── MOBILE KPI cards ── */}
+      <div className="md:hidden space-y-3 mb-5">
+        {/* INGRESOS TOTALES */}
+        <div className="bg-surface-2 border border-edge rounded-2xl p-4 relative overflow-hidden">
+          <div className="flex items-start justify-between">
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Ingresos Totales</p>
+            <span className="text-[10px] font-bold text-success bg-success/10 border border-success/20 px-2 py-0.5 rounded-full">+12%</span>
+          </div>
+          <p className="text-3xl font-black text-white mt-2">€{stats.ingresosMes}</p>
+          <div className="flex items-end gap-0.5 h-10 mt-3">
+            {trendHeights.map((h, i) => (
+              <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: i === trendHeights.length - 1 ? "#34d399" : `rgba(139,92,246,${0.2 + i * 0.1})` }} />
+            ))}
+          </div>
+        </div>
+
+        {/* CITAS + TICKET PROMEDIO */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Citas</p>
+            <p className="text-2xl font-black text-white mt-1">{stats.citasMes}</p>
+            <p className="text-[10px] text-success font-semibold mt-2">+6.2% vs last wk</p>
+            <div className="mt-2 h-1 bg-surface-3 rounded-full overflow-hidden">
+              <div className="h-full bg-brand rounded-full" style={{ width: "72%" }} />
+            </div>
+          </div>
+          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Ticket Promedio</p>
+            <p className="text-2xl font-black text-white mt-1">€{stats.ticketPromedio}</p>
+            <p className="text-[10px] text-success font-semibold mt-2">+13% vs last wk</p>
+            <div className="flex items-end gap-0.5 h-6 mt-2">
+              {[40, 55, 45, 60, 70, 65].map((h, i) => (
+                <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: `rgba(139,92,246,${0.3 + i * 0.1})` }} />
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* NUEVOS CLIENTES */}
+        <div className="bg-surface-2 border border-edge rounded-2xl p-4">
+          <div className="flex items-start justify-between">
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Nuevos Clientes</p>
+            <div className="w-7 h-7 bg-success/15 border border-success/20 rounded-lg flex items-center justify-center text-success">
+              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M19 8v6M22 11h-6" strokeLinecap="round"/>
+              </svg>
+            </div>
+          </div>
+          <p className="text-3xl font-black text-white mt-1">{stats.nuevosClientes}</p>
+          <div className="flex items-center gap-2 mt-3">
+            <div className="flex -space-x-1.5">
+              {["A","B","C"].map((l, i) => (
+                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-white ${AVATAR_COLORS[i]}`}>{l}</div>
+              ))}
+              <div className="w-5 h-5 rounded-full border-2 border-surface-2 bg-surface-3 flex items-center justify-center text-[8px] font-bold text-muted">+{Math.max(0, stats.nuevosClientes - 3)}</div>
+            </div>
+            <span className="text-[10px] text-success font-semibold">+8% conversión</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE: Servicios Populares ── */}
+      <div className="md:hidden bg-surface-2 border border-edge rounded-2xl p-4 mb-3">
+        <h3 className="text-xs font-bold text-muted uppercase tracking-widest mb-4">Servicios Populares</h3>
+        <div className="flex items-center gap-4">
+          <div className="relative flex-shrink-0">
+            <svg width="100" height="100" viewBox="0 0 136 136">
+              <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeW} />
+              {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
+                <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={s.color} strokeWidth={strokeW}
+                  strokeDasharray={`${s.pct * circ} ${circ}`} strokeDashoffset={-s.dashOffset}
+                  strokeLinecap="round" transform={`rotate(-90 ${cx} ${cy})`} />
+              ))}
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <p className="text-lg font-black text-white">{donutSlices.length > 0 ? Math.round(donutSlices[0].pct * 100) : 100}%</p>
+            </div>
+          </div>
+          <div className="flex-1 space-y-2.5">
+            {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
+              <div key={i} className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                  <span className="text-[11px] text-muted truncate">{s.nombre}</span>
+                </div>
+                <span className="text-[11px] font-bold text-white flex-shrink-0">{Math.round(s.pct * 100)}%</span>
+              </div>
+            ))}
+            {donutSlices.length === 0 && <p className="text-xs text-muted">Sin datos</p>}
+          </div>
+        </div>
+      </div>
+
+      {/* ── MOBILE: Mejores Barberos ── */}
+      <div className="md:hidden bg-surface-2 border border-edge rounded-2xl overflow-hidden mb-5">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-edge">
+          <h3 className="text-xs font-bold text-white uppercase tracking-widest">Mejores Barberos</h3>
+          <button type="button" className="text-[11px] font-bold text-brand">VER TODOS</button>
+        </div>
+        {sortedBarberos.length === 0 ? (
+          <Empty msg="Sin datos este mes" />
+        ) : (
+          sortedBarberos.slice(0, 3).map(([nombre, data], i) => {
+            const satisfaccion = [90, 88, 92][i] ?? 85;
+            const topColors = [
+              "bg-warn/20 text-warn border-warn/30",
+              "bg-brand/20 text-brand border-brand/30",
+              "bg-surface-3 text-muted border-edge",
+            ];
+            return (
+              <div key={nombre} className={`flex items-center gap-3 px-4 py-3.5 ${i < 2 ? "border-b border-edge/50" : ""}`}>
+                <div className="relative flex-shrink-0">
+                  <Avatar name={nombre} size="md" />
+                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-surface-2" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-bold text-white truncate">{nombre}</p>
+                  <p className="text-[10px] text-muted mt-0.5">{satisfaccion}% Satisfacción</p>
+                </div>
+                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+                  <p className="text-sm font-black text-white">€{data.revenue.toFixed(0)}</p>
+                  <span className={`text-[9px] font-bold border px-1.5 py-0.5 rounded-full ${topColors[i]}`}>TOP {i + 1}</span>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ── DESKTOP KPI Cards ── */}
+      <div className="hidden md:grid grid-cols-4 gap-4 mb-6">
         {/* Revenue */}
         <div className="bg-surface-2 border border-edge rounded-2xl p-5 relative overflow-hidden">
           <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Total Revenue</p>
@@ -1721,8 +2223,8 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
         </div>
       </div>
  
-      {/* Middle row: Revenue Trend + Popular Services */}
-      <div className="grid grid-cols-5 gap-5 mb-5">
+      {/* Middle row: Revenue Trend + Popular Services — desktop only */}
+      <div className="hidden md:grid grid-cols-5 gap-5 mb-5">
         {/* Revenue Trend */}
         <div className="col-span-3 bg-surface-2 border border-edge rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
@@ -1825,8 +2327,8 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
         </div>
       </div>
  
-      {/* Barber Performance Ranking */}
-      <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
+      {/* Barber Performance Ranking — desktop only */}
+      <div className="hidden md:block bg-surface-2 border border-edge rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-edge">
           <h3 className="text-sm font-bold text-white uppercase tracking-widest">Barber Performance Ranking</h3>
           <button
@@ -2118,7 +2620,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
     setLoading(true);
     let query = supabase
       .from("vacaciones")
-      .select("*, barberos(nombre)")
+      .select("*, barberos(nombre, especialidad)")
       .eq("empresa_id", empresaId)
       .order("fecha_inicio");
     if (selBarbero !== "all") {
@@ -2196,133 +2698,259 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
   }).length;
   const totalEquipo = barberos.length;
  
+  // Mobile status labels
+  function getMobileStatus(inicio: string, fin: string) {
+    const hoy = fechaHoy();
+    if (fin < hoy)                        return { label: "RECHAZADO", cls: "bg-danger/15 border-danger/30 text-danger",  dot: "bg-danger"  };
+    if (inicio <= hoy && hoy <= fin)      return { label: "PENDIENTE", cls: "bg-warn/15 border-warn/30 text-warn",        dot: "bg-warn"    };
+    return                                       { label: "APROBADO",  cls: "bg-success/15 border-success/30 text-success", dot: "bg-success" };
+  }
+
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Administración</p>
-          <h2 className="text-4xl font-black text-white mt-1">Gestión de Ausencias</h2>
+      {/* ── MOBILE layout ── */}
+      <div className="md:hidden">
+        {/* Header */}
+        <div className="mb-5">
+          <Label>Gestión y control de calendario de barberos</Label>
+          <h2 className="text-3xl font-black text-white mt-1">Ausencias</h2>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Filter dropdown */}
-          <div className="relative">
-            <select
-              value={selBarbero}
-              onChange={e => setSelBarbero(e.target.value)}
-              className="appearance-none bg-surface-2 border border-edge text-sm text-white font-semibold pl-10 pr-9 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition cursor-pointer"
-            >
-              <option value="all">Todos los Barberos</option>
-              {barberos.map(b => (
-                <option key={b.id} value={b.id}>{b.nombre}</option>
-              ))}
-            </select>
-            {/* Icon inside select */}
-            <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round"/>
+
+        {/* Filtros activos */}
+        <div className="bg-surface-2 border border-edge rounded-2xl p-4 mb-4">
+          <div className="flex items-center gap-2 mb-3">
+            <svg className="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path d="M3 6h18M7 12h10M10 18h4" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
+            <span className="text-[11px] font-bold text-brand uppercase tracking-widest">Filtros Activos</span>
           </div>
-          <button
-            type="button"
-            onClick={abrirModal}
-            className="flex items-center gap-2 bg-white text-surface rounded-2xl text-sm font-bold px-5 py-2.5 hover:bg-white/90 transition shadow-lg"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
-            </svg>
-            ADD ABSENCE
-          </button>
+          <div className="flex gap-2 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setSelBarbero("all")}
+              className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
+                selBarbero === "all"
+                  ? "bg-brand text-white border-brand"
+                  : "bg-surface-3 text-muted border-edge hover:text-white"
+              }`}
+            >
+              Todos
+            </button>
+            {barberos.map(b => (
+              <button
+                key={b.id}
+                type="button"
+                onClick={() => setSelBarbero(String(b.id))}
+                className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
+                  selBarbero === String(b.id)
+                    ? "bg-brand text-white border-brand"
+                    : "bg-surface-3 text-muted border-edge hover:text-white"
+                }`}
+              >
+                {b.nombre.split(" ")[0]}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
- 
-      {/* Table */}
-      <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden mb-5">
-        {/* Table header */}
-        <div className="grid px-6 py-3.5 border-b border-edge" style={{ gridTemplateColumns: "1fr 7rem 7rem 10rem 9rem 3rem" }}>
-          <TH>Barbero</TH>
-          <TH>Start Date</TH>
-          <TH>End Date</TH>
-          <TH>Reason</TH>
-          <TH>Status</TH>
-          <TH>Acción</TH>
+
+        {/* Section header */}
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Registros Recientes</p>
+          <span className="text-[10px] text-muted">{vacaciones.length} Registro{vacaciones.length !== 1 ? "s" : ""}</span>
         </div>
- 
+
+        {/* Cards */}
         {loading ? <Spinner /> : vacaciones.length === 0 ? (
           <Empty msg="Sin ausencias configuradas para este período" />
         ) : (
-          vacaciones.map((v, i) => {
-            const status = getStatusVac(v.fecha_inicio, v.fecha_fin);
-            const dias = diasEntre(v.fecha_inicio, v.fecha_fin);
-            return (
-              <div
-                key={v.id}
-                className={`grid px-6 py-4 items-center hover:bg-surface-3/40 transition-colors ${
-                  i < vacaciones.length - 1 ? "border-b border-edge/50" : ""
-                }`}
-                style={{ gridTemplateColumns: "1fr 7rem 7rem 10rem 9rem 3rem" }}
-              >
-                {/* Barber */}
-                <div className="flex items-center gap-3">
-                  <Avatar name={v.barberos?.nombre || "?"} size="md" />
-                  <div>
-                    <p className="text-sm font-bold text-white">{v.barberos?.nombre || "—"}</p>
-                    <p className="text-[10px] text-muted mt-0.5">{dias} día{dias !== 1 ? "s" : ""}</p>
+          <div className="space-y-3">
+            {vacaciones.map(v => {
+              const mst = getMobileStatus(v.fecha_inicio, v.fecha_fin);
+              const nombre = v.barberos?.nombre || "—";
+              const rol = v.barberos?.especialidad || "Barbero";
+              const esMismosDia = v.fecha_inicio === v.fecha_fin;
+              const fechaLabel = esMismosDia
+                ? `${formatVacFecha(v.fecha_inicio)} (Todo el día)`
+                : `${formatVacFecha(v.fecha_inicio)} - ${formatVacFecha(v.fecha_fin)}`;
+              return (
+                <div key={v.id} className="bg-surface-2 border border-edge rounded-2xl p-4">
+                  {/* Top row: avatar + name + badge */}
+                  <div className="flex items-center gap-3">
+                    <Avatar name={nombre} size="md" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-white truncate">{nombre}</p>
+                      <p className="text-[10px] text-muted mt-0.5">{rol}</p>
+                    </div>
+                    <span className={`text-[9px] font-bold border px-2 py-0.5 rounded-full flex-shrink-0 flex items-center gap-1 ${mst.cls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${mst.dot}`} />
+                      {mst.label}
+                    </span>
+                  </div>
+
+                  {/* Date */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <svg className="w-3.5 h-3.5 text-muted flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                      <rect x="3" y="4" width="18" height="18" rx="2"/>
+                      <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round"/>
+                    </svg>
+                    <span className="text-xs text-muted-light">{fechaLabel}</span>
+                  </div>
+
+                  {/* Reason */}
+                  {v.motivo && (
+                    <div className="flex items-start gap-2 mt-1.5">
+                      <svg className="w-3.5 h-3.5 text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      <span className="text-xs text-muted leading-relaxed">{v.motivo}</span>
+                    </div>
+                  )}
+
+                  {/* Edit button */}
+                  <div className="flex justify-end mt-3 pt-2 border-t border-edge/50">
+                    <button
+                      type="button"
+                      onClick={() => eliminar(v.id)}
+                      className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-3 border border-edge text-muted hover:text-white transition"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
                   </div>
                 </div>
- 
-                {/* Start */}
-                <p className="text-sm text-muted-light font-medium">{formatVacFecha(v.fecha_inicio)}</p>
- 
-                {/* End */}
-                <p className="text-sm text-muted-light font-medium">{formatVacFecha(v.fecha_fin)}</p>
- 
-                {/* Reason */}
-                <div>
-                  {v.motivo ? (
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-surface-3 border border-edge text-muted-light">
-                      {v.motivo}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-muted italic">—</span>
-                  )}
-                </div>
- 
-                {/* Status */}
-                <div>
-                  <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${status.cls}`}>
-                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                      status.label === "Confirmado" ? "bg-brand" :
-                      status.label === "En curso"   ? "bg-success" : "bg-muted"
-                    }`} />
-                    {status.label}
-                  </span>
-                </div>
- 
-                {/* Action */}
-                <div className="flex items-center justify-end">
-                  <button
-                    type="button"
-                    onClick={() => eliminar(v.id)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-danger hover:border-danger/30 transition"
-                  >
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-                    </svg>
-                  </button>
-                </div>
-              </div>
-            );
-          })
+              );
+            })}
+          </div>
         )}
+
+        {/* FAB */}
+        <button
+          type="button"
+          onClick={abrirModal}
+          className="fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand rounded-full shadow-2xl flex items-center justify-center text-white text-2xl font-bold hover:bg-brand/90 active:scale-95 transition-transform"
+          aria-label="Añadir ausencia"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+            <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
+          </svg>
+        </button>
       </div>
- 
-      {/* Bottom stat cards */}
-      <div className="grid grid-cols-3 gap-4">
+
+      {/* ── DESKTOP layout ── */}
+      <div className="hidden md:block">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-8">
+          <div>
+            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Administración</p>
+            <h2 className="text-4xl font-black text-white mt-1">Gestión de Ausencias</h2>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <select
+                value={selBarbero}
+                onChange={e => setSelBarbero(e.target.value)}
+                className="appearance-none bg-surface-2 border border-edge text-sm text-white font-semibold pl-10 pr-9 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition cursor-pointer"
+              >
+                <option value="all">Todos los Barberos</option>
+                {barberos.map(b => (
+                  <option key={b.id} value={b.id}>{b.nombre}</option>
+                ))}
+              </select>
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
+                <circle cx="9" cy="7" r="4"/>
+                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            <button
+              type="button"
+              onClick={abrirModal}
+              className="flex items-center gap-2 bg-white text-surface rounded-2xl text-sm font-bold px-5 py-2.5 hover:bg-white/90 transition shadow-lg"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
+                <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
+              </svg>
+              ADD ABSENCE
+            </button>
+          </div>
+        </div>
+
+        {/* Table */}
+        <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden mb-5">
+          <div className="grid px-6 py-3.5 border-b border-edge" style={{ gridTemplateColumns: "1fr 7rem 7rem 10rem 9rem 3rem" }}>
+            <TH>Barbero</TH>
+            <TH>Start Date</TH>
+            <TH>End Date</TH>
+            <TH>Reason</TH>
+            <TH>Status</TH>
+            <TH>Acción</TH>
+          </div>
+          {loading ? <Spinner /> : vacaciones.length === 0 ? (
+            <Empty msg="Sin ausencias configuradas para este período" />
+          ) : (
+            vacaciones.map((v, i) => {
+              const status = getStatusVac(v.fecha_inicio, v.fecha_fin);
+              const dias = diasEntre(v.fecha_inicio, v.fecha_fin);
+              return (
+                <div
+                  key={v.id}
+                  className={`grid px-6 py-4 items-center hover:bg-surface-3/40 transition-colors ${
+                    i < vacaciones.length - 1 ? "border-b border-edge/50" : ""
+                  }`}
+                  style={{ gridTemplateColumns: "1fr 7rem 7rem 10rem 9rem 3rem" }}
+                >
+                  <div className="flex items-center gap-3">
+                    <Avatar name={v.barberos?.nombre || "?"} size="md" />
+                    <div>
+                      <p className="text-sm font-bold text-white">{v.barberos?.nombre || "—"}</p>
+                      <p className="text-[10px] text-muted mt-0.5">{dias} día{dias !== 1 ? "s" : ""}</p>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-light font-medium">{formatVacFecha(v.fecha_inicio)}</p>
+                  <p className="text-sm text-muted-light font-medium">{formatVacFecha(v.fecha_fin)}</p>
+                  <div>
+                    {v.motivo ? (
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-surface-3 border border-edge text-muted-light">
+                        {v.motivo}
+                      </span>
+                    ) : (
+                      <span className="text-sm text-muted italic">—</span>
+                    )}
+                  </div>
+                  <div>
+                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${status.cls}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                        status.label === "Confirmado" ? "bg-brand" :
+                        status.label === "En curso"   ? "bg-success" : "bg-muted"
+                      }`} />
+                      {status.label}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => eliminar(v.id)}
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-danger hover:border-danger/30 transition"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Bottom stat cards */}
+        <div className="grid grid-cols-3 gap-4">
         <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-center gap-4">
           <div className="w-11 h-11 bg-success/15 border border-success/20 rounded-xl flex items-center justify-center text-success flex-shrink-0">
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
@@ -2362,7 +2990,8 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
           </div>
         </div>
       </div>
- 
+      </div> {/* end hidden md:block */}
+
       {/* Modal */}
       <Modal open={modal} onClose={() => setModal(false)} title="Añadir Ausencia">
         <div className="space-y-5">

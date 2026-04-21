@@ -59,14 +59,6 @@ function IconChart() {
   )
 }
 
-function IconMenu() {
-  return (
-    <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-      <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
-    </svg>
-  )
-}
-
 function IconClose() {
   return (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -109,6 +101,16 @@ function IconPlus() {
   )
 }
 
+function IconDots() {
+  return (
+    <svg className="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor">
+      <circle cx="5" cy="12" r="2" />
+      <circle cx="12" cy="12" r="2" />
+      <circle cx="19" cy="12" r="2" />
+    </svg>
+  )
+}
+
 // ── Nav items ─────────────────────────────────────────────────────────────────
 
 const NAV = [
@@ -118,6 +120,14 @@ const NAV = [
   { id: 'horarios',     label: 'Horarios',     Icon: IconClock    },
   { id: 'vacaciones',   label: 'Vacaciones',   Icon: IconSun      },
   { id: 'estadisticas', label: 'Estadísticas', Icon: IconChart    },
+]
+
+// Bottom nav primary tabs (mobile)
+const MOBILE_NAV = [
+  { id: 'citas',        label: 'Citas',     Icon: IconCalendar },
+  { id: 'barberos',     label: 'Barberos',  Icon: IconScissors },
+  { id: 'servicios',    label: 'Servicios', Icon: IconUsers    },
+  { id: 'estadisticas', label: 'Stats',     Icon: IconChart    },
 ]
 
 // ── Sidebar content ───────────────────────────────────────────────────────────
@@ -176,7 +186,7 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
                   ? 'bg-surface-3 text-white'
                   : 'text-muted-light hover:bg-surface-2 hover:text-white'
               }`}
-              style={active ? { filter: 'drop-shadow(0px 0px 5px var(--color-surface-3))' } : undefined}
+
             >
               <span className={`w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 transition-colors ${
                 active ? 'bg-brand text-white' : 'text-muted'
@@ -222,6 +232,45 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
   )
 }
 
+// ── Bottom navigation (mobile) ─────────────────────────────────────────────────
+
+function BottomNav({ seccion, onSeccionChange, onMoreClick }: {
+  seccion: string
+  onSeccionChange: (s: string) => void
+  onMoreClick: () => void
+}) {
+  return (
+    <nav className="fixed bottom-0 left-0 right-0 z-40 bg-surface border-t border-edge lg:hidden">
+      <div className="flex items-center justify-around h-16 px-1">
+        {MOBILE_NAV.map(({ id, label, Icon }) => {
+          const active = seccion === id
+          return (
+            <button
+              key={id}
+              type="button"
+              onClick={() => onSeccionChange(id)}
+              className={`flex flex-col items-center justify-center gap-1 flex-1 py-2 transition-colors ${
+                active ? 'text-brand' : 'text-muted hover:text-muted-light'
+              }`}
+            >
+              <Icon />
+              <span className="text-[9px] font-bold uppercase tracking-wide">{label}</span>
+            </button>
+          )
+        })}
+        <button
+          type="button"
+          onClick={onMoreClick}
+          className="flex flex-col items-center justify-center gap-1 flex-1 py-2 text-muted hover:text-muted-light transition-colors"
+        >
+          <IconDots />
+          <span className="text-[9px] font-bold uppercase tracking-wide">Más</span>
+        </button>
+      </div>
+    </nav>
+  )
+}
+
 // ── Shell ─────────────────────────────────────────────────────────────────────
 
 interface AdminShellProps {
@@ -233,8 +282,6 @@ interface AdminShellProps {
 export default function AdminShell({ children, seccion, onSeccionChange }: AdminShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false)
   const [user, setUser] = useState<{ name: string } | null>(null)
-
-  const activeLabel = NAV.find(n => n.id === seccion)?.label ?? ''
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -271,7 +318,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
         />
       )}
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (for "Más" section) */}
       <aside
         className={`fixed inset-y-0 left-0 z-50 w-64 bg-surface border-r border-edge flex flex-col lg:hidden transition-transform duration-200 ${
           mobileOpen ? 'translate-x-0' : '-translate-x-full'
@@ -287,19 +334,33 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
       {/* Main */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Mobile topbar */}
-        <header className="lg:hidden flex items-center gap-4 px-4 py-3 bg-base sticky top-0 z-30">
-          <button
-            type="button"
-            onClick={() => setMobileOpen(true)}
-            aria-label="Abrir menú"
-            className="text-muted-light hover:text-white transition-colors"
-          >
-            <IconMenu />
-          </button>
-          <p className="font-black text-white text-sm">{activeLabel}</p>
-          <div className="ml-auto flex items-center gap-2">
-            <span className="w-2 h-2 bg-online rounded-full animate-pulse" />
-            <span className="text-xs text-online font-semibold">WhatsApp Online</span>
+        <header className="lg:hidden flex items-center justify-between px-4 py-3 bg-base sticky top-0 z-30 border-b border-edge/50">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 bg-brand rounded-lg flex items-center justify-center flex-shrink-0 text-white">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <circle cx="6" cy="6" r="3" />
+                <circle cx="6" cy="18" r="3" />
+                <path d="M20 4 8.12 15.88M14.47 14.48 20 20M8.12 8.12 12 12" strokeLinecap="round" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-white font-black text-sm tracking-tight leading-none">Atelier</p>
+              <p className="text-[9px] text-muted uppercase tracking-widest">Dashboard</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5">
+              <span className="w-2 h-2 bg-online rounded-full animate-pulse" />
+              <span className="text-xs text-online font-semibold hidden xs:block">WhatsApp</span>
+            </div>
+            <button
+              type="button"
+              aria-label="Notificaciones"
+              className="w-8 h-8 flex items-center justify-center text-muted hover:text-white hover:bg-surface-2 rounded-xl transition-colors relative"
+            >
+              <IconBell />
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-brand rounded-full" />
+            </button>
           </div>
         </header>
 
@@ -318,6 +379,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
           <div className="flex items-center gap-2 ml-auto">
             <button
               type="button"
+              aria-label="Notificaciones"
               className="w-9 h-9 flex items-center justify-center text-muted hover:text-white hover:bg-surface-2 rounded-xl transition-colors relative"
             >
               <IconBell />
@@ -325,6 +387,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
             </button>
             <button
               type="button"
+              aria-label="Configuración"
               className="w-9 h-9 flex items-center justify-center text-muted hover:text-white hover:bg-surface-2 rounded-xl transition-colors"
             >
               <IconSettings />
@@ -346,10 +409,17 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
           </div>
         </header>
 
-        <main className="flex-1 overflow-auto">
+        <main className="flex-1 overflow-auto pb-16 lg:pb-0">
           {children}
         </main>
       </div>
+
+      {/* Mobile bottom navigation */}
+      <BottomNav
+        seccion={seccion}
+        onSeccionChange={onSeccionChange}
+        onMoreClick={() => setMobileOpen(true)}
+      />
     </div>
   )
 }
