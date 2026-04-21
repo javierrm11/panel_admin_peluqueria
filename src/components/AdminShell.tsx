@@ -156,7 +156,7 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-white font-black text-sm tracking-tight leading-none">CitasWassap</p>
+            <p className="text-fg font-black text-sm tracking-tight leading-none">CitasWassap</p>
             <p className="text-[9px] text-muted uppercase tracking-widest mt-0.5">Premium Dashboard</p>
           </div>
           {onClose && (
@@ -164,7 +164,7 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
               type="button"
               onClick={onClose}
               aria-label="Cerrar menú"
-              className="text-muted hover:text-white transition-colors p-1 flex-shrink-0"
+              className="text-muted hover:text-fg transition-colors p-1 flex-shrink-0"
             >
               <IconClose />
             </button>
@@ -183,8 +183,8 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
               onClick={() => { onSeccionChange(id); onClose?.() }}
               className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all text-left ${
                 active
-                  ? 'bg-surface-3 text-white'
-                  : 'text-muted-light hover:bg-surface-2 hover:text-white'
+                  ? 'bg-surface-3 text-fg'
+                  : 'text-muted-light hover:bg-surface-2 hover:text-fg'
               }`}
 
             >
@@ -223,7 +223,7 @@ function SidebarContent({ seccion, onSeccionChange, onClose }: SidebarProps) {
         <button
           type="button"
           onClick={handleLogout}
-          className="w-full text-xs text-muted hover:text-white transition-colors py-2"
+          className="w-full text-xs text-muted hover:text-fg transition-colors py-2"
         >
           Cerrar sesión
         </button>
@@ -344,7 +344,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
               </svg>
             </div>
             <div>
-              <p className="text-white font-black text-sm tracking-tight leading-none">Atelier</p>
+              <p className="text-fg font-black text-sm tracking-tight leading-none">Atelier</p>
               <p className="text-[9px] text-muted uppercase tracking-widest">Dashboard</p>
             </div>
           </div>
@@ -356,7 +356,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
             <button
               type="button"
               aria-label="Notificaciones"
-              className="w-8 h-8 flex items-center justify-center text-muted hover:text-white hover:bg-surface-2 rounded-xl transition-colors relative"
+              className="w-8 h-8 flex items-center justify-center text-muted hover:text-fg hover:bg-surface-2 rounded-xl transition-colors relative"
             >
               <IconBell />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-brand rounded-full" />
@@ -372,7 +372,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
             <input
               type="text"
               placeholder="Buscar citas, clientes..."
-              className="bg-transparent text-sm text-white placeholder:text-muted focus:outline-none w-full"
+              className="bg-transparent text-sm text-fg placeholder:text-muted focus:outline-none w-full"
             />
           </div>
 
@@ -380,7 +380,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
             <button
               type="button"
               aria-label="Notificaciones"
-              className="w-9 h-9 flex items-center justify-center text-muted hover:text-white hover:bg-surface-2 rounded-xl transition-colors relative"
+              className="w-9 h-9 flex items-center justify-center text-muted hover:text-fg hover:bg-surface-2 rounded-xl transition-colors relative"
             >
               <IconBell />
               <span className="absolute top-2 right-2 w-1.5 h-1.5 bg-brand rounded-full" />
@@ -388,7 +388,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
             <button
               type="button"
               aria-label="Configuración"
-              className="w-9 h-9 flex items-center justify-center text-muted hover:text-white hover:bg-surface-2 rounded-xl transition-colors"
+              className="w-9 h-9 flex items-center justify-center text-muted hover:text-fg hover:bg-surface-2 rounded-xl transition-colors"
             >
               <IconSettings />
             </button>
@@ -401,7 +401,7 @@ export default function AdminShell({ children, seccion, onSeccionChange }: Admin
                   {initials(user.name)}
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-white leading-none">{toTitleCase(user.name)}</p>
+                  <p className="text-xs font-bold text-fg leading-none">{toTitleCase(user.name)}</p>
                   <p className="text-[9px] text-muted uppercase tracking-widest mt-0.5">Salon Manager</p>
                 </div>
               </div>

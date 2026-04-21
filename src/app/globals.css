@@ -1,44 +1,81 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand */
-  --color-brand:        #8B5CF6;
-  --color-brand-hover:  #7c3aed;
-  --color-brand-dim:    #1e0a3c;
-  --color-brand-glow:   rgba(139, 92, 246, 0.25);
+  /* ─── Brand ───────────────────────────────────────────────────────────────
+     Burdeos profundo #7B2D42: evoca cuero, terciopelo, frascos de tratamiento
+     capilar. Saturado y oscuro → contraste ≥ 5.5:1 sobre todos los fondos
+     crema. Nada de violeta genérico de 2024.
+  */
+  --color-brand:        #7B2D42;
+  --color-brand-hover:  #6A2438;
+  --color-brand-dim:    #F5E8EC;   /* tint claro para fondos de badge/highlight */
+  --color-brand-glow:   rgba(123, 45, 66, 0.18);
 
-  /* Backgrounds */
-  --color-base:         #0F172A;
-  --color-surface:      #1E293B;
-  --color-surface-2:    #1E293B;
-  --color-surface-3:    #263348;
+  /* ─── Backgrounds ─────────────────────────────────────────────────────────
+     Jerarquía invertida: base = más claro (fondo app), surface-3 = más oscuro
+     (elementos elevados). Escala warm-ivory: hueso → lino → pergamino → arena.
+     Cada paso tiene ~4-6 puntos de L* en OKLCH para que sea perceptible.
 
-  /* Borders */
-  --color-edge:         #263348;
-  --color-edge-light:   #334155;
+     base      #F7F2EA  — marfil cálido, 11% más saturado que #FAFAFA
+     surface   #F0EAE0  — lino suave, tarjetas / cards
+     surface-2 #E8E0D3  — hover, secciones internas, filas alternas
+     surface-3 #DDD4C5  — headers de tabla, elementos elevados, nav activo
+  */
+  --color-base:         #F7F2EA;
+  --color-surface:      #F0EAE0;
+  --color-surface-2:    #E8E0D3;
+  --color-surface-3:    #DDD4C5;
 
-  /* Text */
-  --color-fg:           #ffffff;
-  --color-muted:        #6b7280;
-  --color-muted-light:  #9ca3af;
+  /* ─── Borders ─────────────────────────────────────────────────────────────
+     Mismo tinte cálido que los fondos. edge-light para separadores sutiles,
+     edge para contornos de card y campos de formulario. Nada de gris frío.
+  */
+  --color-edge:         #CFC5B4;
+  --color-edge-light:   #E2D9CC;
 
-  /* Overlay */
-  --color-overlay:      #000000;
+  /* ─── Text ────────────────────────────────────────────────────────────────
+     fg #1C1410: marrón-negro cálido (no #000 agresivo). Ratio ≥ 14:1 sobre
+     base. muted #6B5E52: terracota gris, texto secundario ~4.6:1 (AA).
+     muted-light #9B8E84: placeholders / disabled ~3:1 (AA large text).
+  */
+  --color-fg:           #1C1410;
+  --color-muted:        #6B5E52;
+  --color-muted-light:  #9B8E84;
 
-  /* Status */
-  --color-success:      #10B981;
-  --color-danger:       #f87171;
-  --color-warn:         #fbbf24;
-  --color-online:       #10B981;
-  --color-neutral:      #71717a;
+  /* ─── Overlay ─────────────────────────────────────────────────────────────
+     Scrim de modales. En modo claro se reduce la opacidad en el componente,
+     pero el color base sigue siendo oscuro para el contraste del modal.
+  */
+  --color-overlay:      #1C1410;
 
-  /* Avatars */
-  --color-avatar-1:     #8B5CF6;
-  --color-avatar-2:     #2563eb;
-  --color-avatar-3:     #10B981;
-  --color-avatar-4:     #d97706;
-  --color-avatar-5:     #e11d48;
-  --color-avatar-6:     #0d9488;
+  /* ─── Status ──────────────────────────────────────────────────────────────
+     Versiones desaturadas y más oscuras de los estados: los verde/rojo/amarillo
+     puros "gritan" sobre fondos crema. Bajamos luminosidad +10% y saturación
+     -15% respecto a los valores de modo oscuro.
+
+     success #0F7A5A  — verde salvia profundo, ratio ~5:1 sobre base (AA)
+     danger  #C0392B  — rojo ladrillo, ratio ~5.5:1 (AA)
+     warn    #A0720A  — ámbar tostado, ratio ~5:1 (AA)
+     online  = success (indicador "en línea")
+     neutral #7A7068  — gris cálido para estados neutros
+  */
+  --color-success:      #0F7A5A;
+  --color-danger:       #C0392B;
+  --color-warn:         #A0720A;
+  --color-online:       #0F7A5A;
+  --color-neutral:      #7A7068;
+
+  /* ─── Avatars ─────────────────────────────────────────────────────────────
+     Mismos matices hue que el set oscuro pero con L* más baja y saturación
+     moderada: se ven distinguibles sin "chillar" sobre los fondos crema.
+     Cada uno tiene ratio ≥ 3:1 contra la inicial blanca del avatar (AA).
+  */
+  --color-avatar-1:     #7B2D42;   /* burdeos — igual al brand, cohesión */
+  --color-avatar-2:     #2558A8;   /* azul índigo marino */
+  --color-avatar-3:     #0D6E50;   /* verde bosque */
+  --color-avatar-4:     #A05C0A;   /* ámbar cuero */
+  --color-avatar-5:     #B82244;   /* fucsia oscuro */
+  --color-avatar-6:     #0B7070;   /* verde petróleo */
 }
 
 * {

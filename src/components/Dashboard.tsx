@@ -101,7 +101,7 @@ function Input({
       {label && <Label>{label}</Label>}
       <div className="relative">
         <input
-          className="w-full bg-surface-3 border border-edge rounded-xl px-4 py-3 text-sm text-white placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition"
+          className="w-full bg-surface-3 border border-edge rounded-xl px-4 py-3 text-sm text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition"
           {...props}
         />
         {suffix && (
@@ -128,11 +128,11 @@ function Modal({
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-6">
-          <h3 className="font-bold text-white text-xl">{title}</h3>
+          <h3 className="font-bold text-fg text-xl">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-muted hover:text-white hover:bg-surface-3 transition text-lg leading-none"
+            className="w-8 h-8 flex items-center justify-center rounded-full text-muted hover:text-fg hover:bg-surface-3 transition text-lg leading-none"
           >
             ✕
           </button>
@@ -146,7 +146,7 @@ function Modal({
 function Toast({ message, type = "success" }: { message: string; type?: string }) {
   if (!message) return null;
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-surface-2 border border-edge text-white text-sm font-semibold px-5 py-3.5 rounded-2xl shadow-2xl">
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-surface-2 border border-edge text-fg text-sm font-semibold px-5 py-3.5 rounded-2xl shadow-2xl">
       <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black ${
         type === "success" ? "bg-success" : "bg-danger"
       }`}>
@@ -280,7 +280,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
           <Label>Próxima Cita</Label>
           {proxima ? (
             <div className="mt-2 pr-12">
-              <p className="text-2xl font-black text-white leading-tight">
+              <p className="text-2xl font-black text-fg leading-tight">
                 {proxima.hora?.substring(0, 5)} — {proxima.servicios?.nombre}
               </p>
               <p className="text-xs text-muted mt-2">
@@ -308,7 +308,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
               </div>
               <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Confirmadas</p>
             </div>
-            <p className="text-3xl font-black text-white">{confirmadas.length}</p>
+            <p className="text-3xl font-black text-fg">{confirmadas.length}</p>
           </div>
           <div className="bg-surface-2 border border-edge rounded-2xl p-4">
             <div className="flex items-center gap-2 mb-2">
@@ -319,7 +319,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
               </div>
               <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Canceladas</p>
             </div>
-            <p className="text-3xl font-black text-white">{canceladas.length}</p>
+            <p className="text-3xl font-black text-fg">{canceladas.length}</p>
           </div>
         </div>
 
@@ -327,7 +327,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
         <div className="flex justify-end mb-3">
           <button
             type="button"
-            className="flex items-center gap-1.5 text-xs font-bold text-muted hover:text-white transition"
+            className="flex items-center gap-1.5 text-xs font-bold text-muted hover:text-fg transition"
           >
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
               <path d="M3 6h18M7 12h10M10 18h4" strokeLinecap="round" strokeLinejoin="round"/>
@@ -346,7 +346,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
               const hora24 = c.hora?.substring(0, 5) || "—";
               const duracion = c.servicios?.duracion_minutos;
               const mstMap: Record<string, { label: string; cls: string }> = {
-                confirmada: { label: "CONFIRMADA", cls: "bg-success text-white border-success/50" },
+                confirmada: { label: "CONFIRMADA", cls: "bg-success/15 text-success border-success/20" },
                 pendiente:  { label: "EN ESPERA",  cls: "bg-surface-3 text-muted border-edge" },
                 cancelada:  { label: "CANCELADA",  cls: "bg-danger/15 text-danger border-danger/30" },
               };
@@ -356,12 +356,12 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                   <div className="flex items-center gap-3">
                     {/* Time + duration */}
                     <div className="flex-shrink-0 w-14 text-center">
-                      <p className={`text-[17px] font-black text-white leading-tight ${cancelada ? "line-through" : ""}`}>{hora24}</p>
+                      <p className={`text-[17px] font-black text-fg leading-tight ${cancelada ? "line-through" : ""}`}>{hora24}</p>
                       {duracion && <p className="text-[9px] font-bold text-muted uppercase tracking-wide mt-0.5">{duracion} min</p>}
                     </div>
                     {/* Service + Barber */}
                     <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-bold text-white truncate ${cancelada ? "line-through" : ""}`}>
+                      <p className={`text-sm font-bold text-fg truncate ${cancelada ? "line-through" : ""}`}>
                         {c.servicios?.nombre}
                       </p>
                       <div className="flex items-center gap-1 mt-0.5">
@@ -399,7 +399,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
         {/* Page header */}
         <div className="flex items-start justify-between mb-7">
           <div>
-            <h2 className="text-3xl font-black text-white">Gestión de Citas</h2>
+            <h2 className="text-3xl font-black text-fg">Gestión de Citas</h2>
             <p className="text-sm text-muted mt-1">Administra el flujo de trabajo de hoy y visualiza las reservas de la semana.</p>
           </div>
           <div className="flex bg-surface-2 border border-edge rounded-2xl p-1 gap-0.5">
@@ -411,7 +411,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                 className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
                   vista === v.id
                     ? "bg-brand text-white shadow"
-                    : "text-muted hover:text-white"
+                    : "text-muted hover:text-fg"
                 }`}
               >
                 {v.label}
@@ -430,7 +430,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
               {proxima ? (
                 <>
                   <div className="flex items-baseline gap-1.5">
-                    <p className="text-3xl font-black text-white leading-none">
+                    <p className="text-3xl font-black text-fg leading-none">
                       {formatHora12(proxima.hora).time}
                     </p>
                     <span className="text-sm font-bold text-muted">{formatHora12(proxima.hora).period}</span>
@@ -456,7 +456,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
         <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <Label>Confirmadas</Label>
-            <p className="text-4xl font-black text-white mt-3 leading-none">{confirmadas.length}</p>
+            <p className="text-4xl font-black text-fg mt-3 leading-none">{confirmadas.length}</p>
             <p className="text-xs text-muted mt-2">{ocupacion}% de ocupación</p>
           </div>
           <div className="w-10 h-10 bg-success/15 border border-success/20 rounded-xl flex items-center justify-center text-success flex-shrink-0 ml-3">
@@ -470,7 +470,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
         <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-start justify-between">
           <div className="flex-1 min-w-0">
             <Label>Canceladas</Label>
-            <p className="text-4xl font-black text-white mt-3 leading-none">{canceladas.length}</p>
+            <p className="text-4xl font-black text-fg mt-3 leading-none">{canceladas.length}</p>
             <p className="text-xs text-muted mt-2">
               {citas.length > 0 ? `${Math.round((canceladas.length / citas.length) * 100)}% del total` : "Sin citas"}
             </p>
@@ -488,7 +488,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
         {/* Table title */}
         <div className="px-6 py-4 border-b border-edge flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-bold text-white">Agenda Detallada</h3>
+            <h3 className="text-sm font-bold text-fg">Agenda Detallada</h3>
             <p className="text-[10px] text-muted uppercase tracking-widest mt-0.5">{fechaAgendaLabel()}</p>
           </div>
         </div>
@@ -523,7 +523,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                   {/* TIME */}
                   <div>
                     <div className="flex items-baseline gap-1">
-                      <span className={`text-sm font-bold text-white ${cancelada ? "line-through" : ""}`}>{time}</span>
+                      <span className={`text-sm font-bold text-fg ${cancelada ? "line-through" : ""}`}>{time}</span>
                       <span className="text-[10px] text-muted font-semibold">{period}</span>
                     </div>
                     {duracion && (
@@ -537,7 +537,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                       {SERVICIO_ICONS[0]}
                     </div>
                     <div className="min-w-0">
-                      <p className={`text-sm font-semibold text-white truncate ${cancelada ? "line-through" : ""}`}>
+                      <p className={`text-sm font-semibold text-fg truncate ${cancelada ? "line-through" : ""}`}>
                         {c.servicios?.nombre}
                       </p>
                       <p className="text-[10px] text-muted mt-0.5">{c.servicios?.precio} €</p>
@@ -552,7 +552,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
 
                   {/* CLIENT */}
                   <div>
-                    <p className={`text-sm font-semibold text-white truncate ${cancelada ? "line-through" : ""}`}>
+                    <p className={`text-sm font-semibold text-fg truncate ${cancelada ? "line-through" : ""}`}>
                       {clienteNombre}
                     </p>
                     {c.clientes?.nombre && (
@@ -570,7 +570,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                     <button
                       type="button"
                       title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -610,7 +610,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                   type="button"
                   onClick={() => setPage(p => p - 1)}
                   disabled={page === 0}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -620,7 +620,7 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                   type="button"
                   onClick={() => setPage(p => p + 1)}
                   disabled={page >= totalPages - 1}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                     <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
@@ -703,7 +703,7 @@ function BarberoCard({
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <p className="font-bold text-white text-[15px] leading-tight truncate">{barbero.nombre}</p>
+              <p className="font-bold text-fg text-[15px] leading-tight truncate">{barbero.nombre}</p>
               <p className="text-[10px] text-muted uppercase tracking-wider mt-0.5">Barbero Profesional</p>
               <p className="text-xs text-muted mt-1">★ 5.0</p>
             </div>
@@ -720,7 +720,7 @@ function BarberoCard({
               type="button"
               onClick={() => onEdit(barbero)}
               title="Editar"
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -750,14 +750,14 @@ function BarberoCard({
           </div>
         </div>
         <div className="p-4 flex flex-col flex-1">
-          <p className="font-bold text-white text-[15px] leading-tight">{barbero.nombre}</p>
+          <p className="font-bold text-fg text-[15px] leading-tight">{barbero.nombre}</p>
           <p className="text-xs text-muted mt-0.5">Barbero Profesional</p>
           <div className="flex items-center gap-1.5 mt-4">
             <button
               type="button"
               onClick={() => onEdit(barbero)}
               title="Editar"
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -767,7 +767,7 @@ function BarberoCard({
             <button
               type="button"
               title="Historial"
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
             >
               <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <polyline points="23 4 23 10 17 10" />
@@ -875,7 +875,7 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
       <div className="flex items-start justify-between mb-7">
         <div>
           <Label>Nuestros maestros de la navaja</Label>
-          <h2 className="text-3xl font-black text-white mt-1">Equipo de Barberos</h2>
+          <h2 className="text-3xl font-black text-fg mt-1">Equipo de Barberos</h2>
         </div>
         {/* Desktop: header button */}
         <button
@@ -932,18 +932,18 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
             <div className="bg-surface-2 border border-edge rounded-2xl p-5">
               <div className="flex items-center justify-between mb-5">
                 <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Resumen de Desempeño</p>
-                <button type="button" className="text-muted hover:text-white transition-colors text-lg leading-none tracking-widest">⋯</button>
+                <button type="button" className="text-muted hover:text-fg transition-colors text-lg leading-none tracking-widest">⋯</button>
               </div>
               <div className="space-y-4">
                 {topBarbero ? (
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-lg flex-shrink-0" style={{ background: `linear-gradient(135deg, ${barberoGradient(topBarbero)[0]}, ${barberoGradient(topBarbero)[1]})` }}>
-                      <div className="w-full h-full flex items-center justify-center text-xs font-black text-white/60">
+                      <div className="w-full h-full flex items-center justify-center text-xs font-black text-fg/60">
                         {topBarbero.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white truncate">{topBarbero}</p>
+                      <p className="text-sm font-bold text-fg truncate">{topBarbero}</p>
                       <p className="text-[10px] text-muted uppercase tracking-wide mt-0.5">Top Citas del Mes</p>
                     </div>
                     <span className="text-xs font-bold text-success flex-shrink-0">↑ Top</span>
@@ -956,7 +956,7 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
                     ⭐
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white">Equipo Activo</p>
+                    <p className="text-sm font-bold text-fg">Equipo Activo</p>
                     <p className="text-[10px] text-muted uppercase tracking-wide mt-0.5">
                       {activos} de {barberos.length} disponibles
                     </p>
@@ -972,7 +972,7 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
             <div className="bg-surface-2 border border-edge rounded-2xl p-5">
               <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Total Miembros del Equipo</p>
               <div className="flex items-baseline gap-2 mt-3">
-                <p className="text-5xl font-black text-white">{barberos.length}</p>
+                <p className="text-5xl font-black text-fg">{barberos.length}</p>
                 {activos > 0 && (
                   <span className="text-sm font-bold text-success">+{activos} Activos</span>
                 )}
@@ -1008,14 +1008,14 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
                     onClick={() => toggleServicio(s.id)}
                     className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-sm font-medium transition text-left border ${
                       sel
-                        ? "bg-brand/20 border-brand/40 text-white"
-                        : "bg-surface-3 border-edge text-muted-light hover:border-edge-light hover:text-white"
+                        ? "bg-brand/20 border-brand/40 text-fg"
+                        : "bg-surface-3 border-edge text-muted-light hover:border-edge-light hover:text-fg"
                     }`}
                   >
                     <span className={`w-4 h-4 rounded flex-shrink-0 border-2 flex items-center justify-center ${
                       sel ? "border-brand bg-brand" : "border-muted"
                     }`}>
-                      {sel && <span className="text-white text-[9px] font-black leading-none">✓</span>}
+                      {sel && <span className="text-fg text-[9px] font-black leading-none">✓</span>}
                     </span>
                     {s.nombre}
                   </button>
@@ -1034,7 +1034,7 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
             <button
               type="button"
               onClick={() => setModal(false)}
-              className="flex-1 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:bg-surface-3 hover:text-white transition"
+              className="flex-1 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:bg-surface-3 hover:text-fg transition"
             >
               Cancelar
             </button>
@@ -1136,7 +1136,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
       {/* Header */}
       <div className="flex items-start justify-between mb-7">
         <div>
-          <h2 className="text-4xl font-black text-white italic">Carta de Servicios</h2>
+          <h2 className="text-4xl font-black text-fg italic">Carta de Servicios</h2>
           <p className="hidden md:block text-sm text-muted mt-2 max-w-md leading-relaxed">
             Define y gestiona la experiencia premium que ofreces a tus clientes. Ajusta tiempos, precios y estilos con precisión.
           </p>
@@ -1176,7 +1176,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
               <p className="text-[9px] font-bold text-brand uppercase tracking-widest">Servicio Estrella</p>
               <div className="flex items-start justify-between mt-2 gap-3">
                 <div className="min-w-0">
-                  <h3 className="text-xl font-black text-white leading-tight">{topServicioData.nombre}</h3>
+                  <h3 className="text-xl font-black text-fg leading-tight">{topServicioData.nombre}</h3>
                   <p className="text-xs text-muted mt-1.5 leading-relaxed">Tu servicio más popular este mes</p>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -1209,16 +1209,16 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
                     {visual.icon}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-white truncate">{s.nombre}</p>
+                    <p className="text-sm font-bold text-fg truncate">{s.nombre}</p>
                     <p className="text-[10px] text-muted mt-0.5">· {s.duracion_minutos} min</p>
                   </div>
-                  <p className="text-base font-black text-white flex-shrink-0">{Number(s.precio).toFixed(0)}€</p>
+                  <p className="text-base font-black text-fg flex-shrink-0">{Number(s.precio).toFixed(0)}€</p>
                   <div className="flex items-center gap-1.5 flex-shrink-0">
                     <button
                       type="button"
                       onClick={() => abrirModal(s)}
                       title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -1285,7 +1285,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
                         {visual.icon}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-bold text-white truncate">{s.nombre}</p>
+                        <p className="text-sm font-bold text-fg truncate">{s.nombre}</p>
                         <p className="text-xs text-muted mt-0.5">Servicio premium</p>
                       </div>
                     </div>
@@ -1298,7 +1298,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
                     </div>
 
                     {/* Price */}
-                    <p className="text-xl font-black text-white">
+                    <p className="text-xl font-black text-fg">
                       {Number(s.precio).toFixed(2)} €
                     </p>
 
@@ -1308,7 +1308,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
                         type="button"
                         onClick={() => abrirModal(s)}
                         title="Editar"
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors"
+                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                           <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
@@ -1341,7 +1341,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
             <p className="text-[10px] font-bold text-brand uppercase tracking-widest">Servicio Estrella</p>
             {topServicio ? (
               <>
-                <h3 className="text-xl font-black text-white mt-2 leading-tight">{topServicio.nombre}</h3>
+                <h3 className="text-xl font-black text-fg mt-2 leading-tight">{topServicio.nombre}</h3>
                 <p className="text-xs text-muted mt-2 leading-relaxed">
                   El servicio más solicitado este mes. Considera destacarlo para clientes VIP.
                 </p>
@@ -1364,7 +1364,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
                   <div key={nombre} className="flex items-center justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${RANK_COLORS[idx]}`} />
-                      <span className="text-xs text-white truncate">{nombre}</span>
+                      <span className="text-xs text-fg truncate">{nombre}</span>
                     </div>
                     <span className="text-[10px] text-muted flex-shrink-0 font-semibold">{count} citas</span>
                   </div>
@@ -1407,7 +1407,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
             <button
               type="button"
               onClick={() => setModal(false)}
-              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-white hover:border-edge-light transition"
+              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-fg hover:border-edge-light transition"
             >
               Cancelar
             </button>
@@ -1435,14 +1435,14 @@ function SlotTime({ h, onEdit, onDelete }: { h: any; onEdit: () => void; onDelet
         <path strokeLinecap="round" d="M12 6v6l4 2" strokeWidth="1.5" />
       </svg>
       <span
-        className="text-white text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
+        className="text-fg text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
         onClick={onEdit}
       >
         {h.hora_inicio?.substring(0,5)}
       </span>
       <span className="text-muted text-sm mx-0.5">—</span>
       <span
-        className="text-white text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
+        className="text-fg text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
         onClick={onEdit}
       >
         {h.hora_fin?.substring(0,5)}
@@ -1532,7 +1532,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
     <div>
       {/* Page header */}
       <div className="mb-6">
-        <h2 className="text-3xl font-black text-white">Horarios</h2>
+        <h2 className="text-3xl font-black text-fg">Horarios</h2>
         <p className="text-sm text-muted mt-1">Gestiona la disponibilidad de tu equipo para las próximas sesiones.</p>
       </div>
 
@@ -1550,7 +1550,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                   onClick={() => setSelBarbero(b)}
                   className={`flex items-center gap-2 px-3 py-2 rounded-full border flex-shrink-0 transition-colors ${
                     selBarbero?.id === b.id
-                      ? "border-brand bg-brand/10 text-white"
+                      ? "border-brand bg-brand/10 text-fg"
                       : "border-edge bg-surface-2 text-muted hover:border-edge-light"
                   }`}
                 >
@@ -1582,7 +1582,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                       <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-base" />
                     )}
                   </div>
-                  <span className="text-[11px] font-bold text-white text-center leading-tight">{b.nombre}</span>
+                  <span className="text-[11px] font-bold text-fg text-center leading-tight">{b.nombre}</span>
                   <span className="text-[9px] text-brand uppercase font-bold tracking-wide leading-tight">
                     {b.especialidad || "Barbero"}
                   </span>
@@ -1607,7 +1607,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
         <button
           type="button"
           onClick={copiarSemana}
-          className="flex items-center gap-2 bg-surface-2 border border-edge text-muted-light hover:text-white hover:border-edge-light px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition"
+          className="flex items-center gap-2 bg-surface-2 border border-edge text-muted-light hover:text-fg hover:border-edge-light px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition"
         >
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth="1.5" />
@@ -1640,7 +1640,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
         <>
           {/* Desktop title */}
           <div className="hidden md:block mb-5">
-            <h2 className="text-2xl font-black text-white">Disponibilidad Semanal</h2>
+            <h2 className="text-2xl font-black text-fg">Disponibilidad Semanal</h2>
             <p className="text-sm text-muted mt-1">Configura los turnos y descansos para {selBarbero.nombre}.</p>
           </div>
 
@@ -1657,7 +1657,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                   }`}
                 >
                   <div className={`flex items-center justify-between px-4 py-3 border-l-4 ${activo ? "border-brand" : "border-edge/30"}`}>
-                    <p className={`text-base font-black ${activo ? "text-white" : "text-muted"}`}>{dia.label}</p>
+                    <p className={`text-base font-black ${activo ? "text-fg" : "text-muted"}`}>{dia.label}</p>
                     <span className={`text-[10px] font-bold uppercase tracking-widest ${activo ? "text-success" : "text-muted"}`}>
                       {activo ? "Abierto" : "Cerrado"}
                     </span>
@@ -1673,7 +1673,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                             </svg>
                           </div>
                           <span
-                            className="flex-1 text-white text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
+                            className="flex-1 text-fg text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
                             onClick={() => abrirModal(h)}
                           >
                             {h.hora_inicio?.substring(0, 5)} &nbsp;—&nbsp; {h.hora_fin?.substring(0, 5)}
@@ -1692,7 +1692,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                       <button
                         type="button"
                         onClick={() => abrirModal(null, dia.id)}
-                        className="w-full text-xs text-muted hover:text-white font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 py-2 transition"
+                        className="w-full text-xs text-muted hover:text-fg font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 py-2 transition"
                       >
                         + Añadir turno
                       </button>
@@ -1727,7 +1727,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                   }`}
                 >
                   <div className={`w-32 flex-shrink-0 pl-3 border-l-2 ${activo ? "border-brand" : "border-edge/40"}`}>
-                    <p className={`text-sm font-bold ${activo ? "text-white" : "text-muted"}`}>{dia.label}</p>
+                    <p className={`text-sm font-bold ${activo ? "text-fg" : "text-muted"}`}>{dia.label}</p>
                     {activo ? (
                       <p className="text-[10px] text-success font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
                         <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
@@ -1749,7 +1749,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                         <button
                           type="button"
                           onClick={() => abrirModal(null, dia.id)}
-                          className="text-xs text-muted hover:text-white font-semibold uppercase tracking-wider flex items-center gap-1 transition px-2 py-1"
+                          className="text-xs text-muted hover:text-fg font-semibold uppercase tracking-wider flex items-center gap-1 transition px-2 py-1"
                         >
                           + Añadir turno
                         </button>
@@ -1801,7 +1801,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
               <span className="inline-block text-[9px] text-brand font-bold uppercase tracking-widest border border-brand/30 bg-brand/10 px-2.5 py-1 rounded-full">
                 Tip de Optimización
               </span>
-              <h3 className="text-lg font-black text-white mt-3 leading-snug">
+              <h3 className="text-lg font-black text-fg mt-3 leading-snug">
                 {selBarbero.nombre} tiene un 15% de huecos los Viernes tarde.
               </h3>
               <p className="text-sm text-muted mt-2 leading-relaxed">
@@ -1821,16 +1821,16 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
             <div className="bg-surface-2 border border-edge rounded-2xl p-6">
               <div className="flex items-center gap-2 mb-1">
                 <span className="text-success text-base">✓</span>
-                <h3 className="text-base font-black text-white">Configuración de Próximo Festivo</h3>
+                <h3 className="text-base font-black text-fg">Configuración de Próximo Festivo</h3>
               </div>
               <p className="text-[11px] text-muted uppercase font-bold tracking-widest mt-3">12 de Octubre</p>
               <div className="flex items-center justify-between mt-4 pt-4 border-t border-edge">
                 <p className="text-sm text-muted">
-                  Estado: <span className="text-white font-semibold">Cerrado</span>
+                  Estado: <span className="text-fg font-semibold">Cerrado</span>
                 </p>
                 <button
                   type="button"
-                  className="text-sm text-white bg-surface-3 border border-edge px-4 py-2 rounded-xl hover:border-edge-light transition font-semibold"
+                  className="text-sm text-fg bg-surface-3 border border-edge px-4 py-2 rounded-xl hover:border-edge-light transition font-semibold"
                 >
                   Editar
                 </button>
@@ -1853,8 +1853,8 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                   onClick={() => setForm(f => ({ ...f, dia_semana: d.id }))}
                   className={`py-2 rounded-xl text-xs font-semibold transition border ${
                     form.dia_semana === d.id
-                      ? "bg-brand/20 border-brand/40 text-white"
-                      : "bg-surface-3 border-edge text-muted-light hover:text-white hover:border-edge-light"
+                      ? "bg-brand/20 border-brand/40 text-fg"
+                      : "bg-surface-3 border-edge text-muted-light hover:text-fg hover:border-edge-light"
                   }`}
                 >
                   {d.label.substring(0, 3)}
@@ -1881,8 +1881,8 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
               <span className="text-brand text-sm flex-shrink-0 mt-0.5">ℹ</span>
               <p className="text-xs text-brand/80 leading-relaxed">
                 Este turno será aplicado a{" "}
-                <strong className="text-white">{selBarbero.nombre}</strong> el{" "}
-                <strong className="text-white">{DIAS_SEMANA.find(d => d.id === form.dia_semana)?.label}</strong>.
+                <strong className="text-fg">{selBarbero.nombre}</strong> el{" "}
+                <strong className="text-fg">{DIAS_SEMANA.find(d => d.id === form.dia_semana)?.label}</strong>.
               </p>
             </div>
           )}
@@ -1890,7 +1890,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
             <button
               type="button"
               onClick={() => setModal(false)}
-              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-white hover:border-edge-light transition"
+              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-fg hover:border-edge-light transition"
             >
               Cancelar
             </button>
@@ -2001,7 +2001,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
       {/* Header */}
       <div className="mb-6 md:mb-8">
         <Label>Dashboard de rendimiento</Label>
-        <h2 className="text-3xl md:text-4xl font-black text-white mt-1">Estadísticas Avanzadas</h2>
+        <h2 className="text-3xl md:text-4xl font-black text-fg mt-1">Estadísticas Avanzadas</h2>
         <p className="hidden md:block text-sm text-muted mt-1.5 max-w-lg">
           Análisis detallado del rendimiento de tu atelier durante el último periodo.
         </p>
@@ -2015,7 +2015,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Ingresos Totales</p>
             <span className="text-[10px] font-bold text-success bg-success/10 border border-success/20 px-2 py-0.5 rounded-full">+12%</span>
           </div>
-          <p className="text-3xl font-black text-white mt-2">€{stats.ingresosMes}</p>
+          <p className="text-3xl font-black text-fg mt-2">€{stats.ingresosMes}</p>
           <div className="flex items-end gap-0.5 h-10 mt-3">
             {trendHeights.map((h, i) => (
               <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: i === trendHeights.length - 1 ? "#34d399" : `rgba(139,92,246,${0.2 + i * 0.1})` }} />
@@ -2027,7 +2027,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
         <div className="grid grid-cols-2 gap-3">
           <div className="bg-surface-2 border border-edge rounded-2xl p-4">
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Citas</p>
-            <p className="text-2xl font-black text-white mt-1">{stats.citasMes}</p>
+            <p className="text-2xl font-black text-fg mt-1">{stats.citasMes}</p>
             <p className="text-[10px] text-success font-semibold mt-2">+6.2% vs last wk</p>
             <div className="mt-2 h-1 bg-surface-3 rounded-full overflow-hidden">
               <div className="h-full bg-brand rounded-full" style={{ width: "72%" }} />
@@ -2035,7 +2035,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
           </div>
           <div className="bg-surface-2 border border-edge rounded-2xl p-4">
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Ticket Promedio</p>
-            <p className="text-2xl font-black text-white mt-1">€{stats.ticketPromedio}</p>
+            <p className="text-2xl font-black text-fg mt-1">€{stats.ticketPromedio}</p>
             <p className="text-[10px] text-success font-semibold mt-2">+13% vs last wk</p>
             <div className="flex items-end gap-0.5 h-6 mt-2">
               {[40, 55, 45, 60, 70, 65].map((h, i) => (
@@ -2057,11 +2057,11 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-black text-white mt-1">{stats.nuevosClientes}</p>
+          <p className="text-3xl font-black text-fg mt-1">{stats.nuevosClientes}</p>
           <div className="flex items-center gap-2 mt-3">
             <div className="flex -space-x-1.5">
               {["A","B","C"].map((l, i) => (
-                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-white ${AVATAR_COLORS[i]}`}>{l}</div>
+                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-fg ${AVATAR_COLORS[i]}`}>{l}</div>
               ))}
               <div className="w-5 h-5 rounded-full border-2 border-surface-2 bg-surface-3 flex items-center justify-center text-[8px] font-bold text-muted">+{Math.max(0, stats.nuevosClientes - 3)}</div>
             </div>
@@ -2084,7 +2084,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
               ))}
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-lg font-black text-white">{donutSlices.length > 0 ? Math.round(donutSlices[0].pct * 100) : 100}%</p>
+              <p className="text-lg font-black text-fg">{donutSlices.length > 0 ? Math.round(donutSlices[0].pct * 100) : 100}%</p>
             </div>
           </div>
           <div className="flex-1 space-y-2.5">
@@ -2094,7 +2094,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                   <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
                   <span className="text-[11px] text-muted truncate">{s.nombre}</span>
                 </div>
-                <span className="text-[11px] font-bold text-white flex-shrink-0">{Math.round(s.pct * 100)}%</span>
+                <span className="text-[11px] font-bold text-fg flex-shrink-0">{Math.round(s.pct * 100)}%</span>
               </div>
             ))}
             {donutSlices.length === 0 && <p className="text-xs text-muted">Sin datos</p>}
@@ -2105,7 +2105,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
       {/* ── MOBILE: Mejores Barberos ── */}
       <div className="md:hidden bg-surface-2 border border-edge rounded-2xl overflow-hidden mb-5">
         <div className="flex items-center justify-between px-4 py-3 border-b border-edge">
-          <h3 className="text-xs font-bold text-white uppercase tracking-widest">Mejores Barberos</h3>
+          <h3 className="text-xs font-bold text-fg uppercase tracking-widest">Mejores Barberos</h3>
           <button type="button" className="text-[11px] font-bold text-brand">VER TODOS</button>
         </div>
         {sortedBarberos.length === 0 ? (
@@ -2125,11 +2125,11 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                   <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-surface-2" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-white truncate">{nombre}</p>
+                  <p className="text-sm font-bold text-fg truncate">{nombre}</p>
                   <p className="text-[10px] text-muted mt-0.5">{satisfaccion}% Satisfacción</p>
                 </div>
                 <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <p className="text-sm font-black text-white">€{data.revenue.toFixed(0)}</p>
+                  <p className="text-sm font-black text-fg">€{data.revenue.toFixed(0)}</p>
                   <span className={`text-[9px] font-bold border px-1.5 py-0.5 rounded-full ${topColors[i]}`}>TOP {i + 1}</span>
                 </div>
               </div>
@@ -2143,7 +2143,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
         {/* Revenue */}
         <div className="bg-surface-2 border border-edge rounded-2xl p-5 relative overflow-hidden">
           <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Total Revenue</p>
-          <p className="text-3xl font-black text-white mt-2">€{stats.ingresosMes}</p>
+          <p className="text-3xl font-black text-fg mt-2">€{stats.ingresosMes}</p>
           <div className="flex items-center gap-1.5 mt-3">
             {/* Mini bar sparkline */}
             <div className="flex items-end gap-0.5 h-8">
@@ -2174,7 +2174,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-black text-white mt-2">{stats.citasMes}</p>
+          <p className="text-3xl font-black text-fg mt-2">{stats.citasMes}</p>
           {/* Thin progress bar */}
           <div className="mt-3 h-1 bg-surface-3 rounded-full overflow-hidden">
             <div className="h-full bg-brand rounded-full" style={{ width: "72%" }} />
@@ -2194,12 +2194,12 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-black text-white mt-2">{stats.nuevosClientes}</p>
+          <p className="text-3xl font-black text-fg mt-2">{stats.nuevosClientes}</p>
           {/* Avatar stack */}
           <div className="flex items-center gap-2 mt-3">
             <div className="flex -space-x-1.5">
               {["A","B","C"].map((l, i) => (
-                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-white ${AVATAR_COLORS[i]}`}>{l}</div>
+                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-fg ${AVATAR_COLORS[i]}`}>{l}</div>
               ))}
               <div className="w-5 h-5 rounded-full border-2 border-surface-2 bg-surface-3 flex items-center justify-center text-[8px] font-bold text-muted">+{Math.max(0, stats.nuevosClientes - 3)}</div>
             </div>
@@ -2217,7 +2217,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
               </svg>
             </div>
           </div>
-          <p className="text-3xl font-black text-white mt-2">€{stats.ticketPromedio}</p>
+          <p className="text-3xl font-black text-fg mt-2">€{stats.ticketPromedio}</p>
           <p className="text-[10px] text-success mt-3 font-semibold">€2.40 increase per visit</p>
           <p className="text-[10px] text-muted mt-0.5">Upsell efficiency: 24%</p>
         </div>
@@ -2228,7 +2228,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
         {/* Revenue Trend */}
         <div className="col-span-3 bg-surface-2 border border-edge rounded-2xl p-6">
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-white uppercase tracking-widest">Revenue Trend</h3>
+            <h3 className="text-sm font-bold text-fg uppercase tracking-widest">Revenue Trend</h3>
             <div className="flex bg-surface-3 border border-edge rounded-xl p-0.5 gap-0.5">
               {(["6m","3m","1m"] as const).map(p => (
                 <button
@@ -2236,7 +2236,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                   key={p}
                   onClick={() => setPeriodo(p)}
                   className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition ${
-                    periodo === p ? "bg-surface-2 text-white border border-edge" : "text-muted hover:text-white"
+                    periodo === p ? "bg-surface-2 text-fg border border-edge" : "text-muted hover:text-fg"
                   }`}
                 >
                   Last {p === "6m" ? "6 Months" : p === "3m" ? "3 Months" : "Month"}
@@ -2275,7 +2275,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
  
         {/* Popular Services donut */}
         <div className="col-span-2 bg-surface-2 border border-edge rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-white uppercase tracking-widest mb-5">Popular Services</h3>
+          <h3 className="text-sm font-bold text-fg uppercase tracking-widest mb-5">Popular Services</h3>
  
           {/* SVG Donut */}
           <div className="flex items-center justify-center mb-5">
@@ -2301,7 +2301,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                 ))}
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-2xl font-black text-white">{stats.totalServicios}</p>
+                <p className="text-2xl font-black text-fg">{stats.totalServicios}</p>
                 <p className="text-[9px] text-muted font-bold uppercase tracking-widest">Total Servs</p>
               </div>
             </div>
@@ -2315,7 +2315,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                 <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
                 <span className="text-xs text-muted-light truncate">{s.nombre}</span>
               </div>
-              <span className="text-xs font-bold text-white flex-shrink-0">
+              <span className="text-xs font-bold text-fg flex-shrink-0">
                 {Math.round(s.pct * 100)}%
               </span>
               </div>
@@ -2330,10 +2330,10 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
       {/* Barber Performance Ranking — desktop only */}
       <div className="hidden md:block bg-surface-2 border border-edge rounded-2xl overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-edge">
-          <h3 className="text-sm font-bold text-white uppercase tracking-widest">Barber Performance Ranking</h3>
+          <h3 className="text-sm font-bold text-fg uppercase tracking-widest">Barber Performance Ranking</h3>
           <button
             type="button"
-            className="flex items-center gap-1.5 text-xs text-muted hover:text-white transition font-semibold"
+            className="flex items-center gap-1.5 text-xs text-muted hover:text-fg transition font-semibold"
           >
             Download Report
             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -2374,7 +2374,7 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                     <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-surface-2" />
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-white">{nombre}</p>
+                    <p className="text-sm font-bold text-fg">{nombre}</p>
                     <p className="text-[10px] text-muted mt-0.5">
                       {i === 0 ? "Senior Stylist" : i === 1 ? "Service Master" : "Junior Barber"}
                     </p>
@@ -2393,19 +2393,19 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
                         }}
                       />
                     </div>
-                    <span className="text-xs font-bold text-white flex-shrink-0 w-8 text-right">{efficiencyPct}%</span>
+                    <span className="text-xs font-bold text-fg flex-shrink-0 w-8 text-right">{efficiencyPct}%</span>
                   </div>
                 </div>
  
                 {/* Rating */}
                 <div className="flex items-center gap-1.5">
                   <span className="text-warn text-sm">★</span>
-                  <span className="text-sm font-bold text-white">{rating}</span>
+                  <span className="text-sm font-bold text-fg">{rating}</span>
                 </div>
  
                 {/* Revenue */}
                 <div>
-                  <p className="text-sm font-black text-white">€{data.revenue.toFixed(2)}</p>
+                  <p className="text-sm font-black text-fg">€{data.revenue.toFixed(2)}</p>
                   <p className={`text-[10px] font-semibold mt-0.5 ${deltaColor}`}>{deltaLabel}</p>
                 </div>
               </div>
@@ -2426,12 +2426,12 @@ function AppointmentCard({ cita, onCancel }: { cita: any; onCancel?: (id: string
   return (
     <div className="bg-surface-3 border border-edge rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-bold text-white leading-tight truncate">{clientName}</p>
+        <p className="text-sm font-bold text-fg leading-tight truncate">{clientName}</p>
         <span className="text-[10px] text-muted bg-surface-2 border border-edge px-2 py-0.5 rounded-full shrink-0 font-semibold">{hora}</span>
       </div>
       <p className="text-xs text-muted mt-1 truncate">{serviceName}</p>
       <div className="flex items-center gap-1.5 mt-3">
-        <button type="button" title="Ver detalle" className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-2 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors">
+        <button type="button" title="Ver detalle" className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-2 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round"/>
             <circle cx="12" cy="12" r="3"/>
@@ -2457,7 +2457,7 @@ function HistorialCard({ cita }: { cita: any }) {
   return (
     <div className="bg-surface-3 border border-edge rounded-2xl p-4">
       <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-bold text-white leading-tight truncate">{clientName}</p>
+        <p className="text-sm font-bold text-fg leading-tight truncate">{clientName}</p>
         <span className="text-[10px] text-muted bg-surface-2 border border-edge px-2 py-0.5 rounded-full shrink-0 font-semibold">{hora}</span>
       </div>
       <p className="text-xs text-muted mt-1 truncate">
@@ -2467,7 +2467,7 @@ function HistorialCard({ cita }: { cita: any }) {
         </span>
       </p>
       <div className="flex items-center gap-1.5 mt-3">
-        <button type="button" title="Opciones" className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-2 border border-edge text-muted hover:text-white hover:border-edge-light transition-colors">
+        <button type="button" title="Opciones" className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-2 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors">
           <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
           </svg>
@@ -2519,10 +2519,10 @@ function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string)
   const cancelaciones = citasHoy.filter(c => c.estado === "cancelada").length;
 
   const stats = [
-    { label: "CITAS HOY",        value: citasHoy.length,              sub: `${confirmadas.length} confirmadas`, color: "text-white" },
+    { label: "CITAS HOY",        value: citasHoy.length,              sub: `${confirmadas.length} confirmadas`, color: "text-fg" },
     { label: "INGRESOS",         value: `$${ingresosMes.toFixed(0)}`, sub: "Este mes",                          color: "text-success" },
-    { label: "NUEVOS CLIENTES",  value: citasHoy.length,              sub: "Hoy",                               color: "text-white" },
-    { label: "CANCELACIONES",    value: cancelaciones,                sub: "Hoy",                               color: cancelaciones > 0 ? "text-danger" : "text-white" },
+    { label: "NUEVOS CLIENTES",  value: citasHoy.length,              sub: "Hoy",                               color: "text-fg" },
+    { label: "CANCELACIONES",    value: cancelaciones,                sub: "Hoy",                               color: cancelaciones > 0 ? "text-danger" : "text-fg" },
   ];
 
   return (
@@ -2530,7 +2530,7 @@ function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string)
       {/* Header */}
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h2 className="text-3xl font-black text-white">Panel de Control</h2>
+          <h2 className="text-3xl font-black text-fg">Panel de Control</h2>
           <p className="text-sm text-muted mt-1">Gestión inteligente de tu flujo de trabajo hoy.</p>
         </div>
         <div className="hidden lg:flex items-center gap-2 mt-1.5">
@@ -2713,7 +2713,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
         {/* Header */}
         <div className="mb-5">
           <Label>Gestión y control de calendario de barberos</Label>
-          <h2 className="text-3xl font-black text-white mt-1">Ausencias</h2>
+          <h2 className="text-3xl font-black text-fg mt-1">Ausencias</h2>
         </div>
 
         {/* Filtros activos */}
@@ -2731,7 +2731,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
               className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
                 selBarbero === "all"
                   ? "bg-brand text-white border-brand"
-                  : "bg-surface-3 text-muted border-edge hover:text-white"
+                  : "bg-surface-3 text-muted border-edge hover:text-fg"
               }`}
             >
               Todos
@@ -2744,7 +2744,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
                 className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
                   selBarbero === String(b.id)
                     ? "bg-brand text-white border-brand"
-                    : "bg-surface-3 text-muted border-edge hover:text-white"
+                    : "bg-surface-3 text-muted border-edge hover:text-fg"
                 }`}
               >
                 {b.nombre.split(" ")[0]}
@@ -2778,7 +2778,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
                   <div className="flex items-center gap-3">
                     <Avatar name={nombre} size="md" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-white truncate">{nombre}</p>
+                      <p className="text-sm font-bold text-fg truncate">{nombre}</p>
                       <p className="text-[10px] text-muted mt-0.5">{rol}</p>
                     </div>
                     <span className={`text-[9px] font-bold border px-2 py-0.5 rounded-full flex-shrink-0 flex items-center gap-1 ${mst.cls}`}>
@@ -2812,7 +2812,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
                     <button
                       type="button"
                       onClick={() => eliminar(v.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-3 border border-edge text-muted hover:text-white transition"
+                      className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-3 border border-edge text-muted hover:text-fg transition"
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                         <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
@@ -2845,14 +2845,14 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
         <div className="flex items-start justify-between mb-8">
           <div>
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Administración</p>
-            <h2 className="text-4xl font-black text-white mt-1">Gestión de Ausencias</h2>
+            <h2 className="text-4xl font-black text-fg mt-1">Gestión de Ausencias</h2>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative">
               <select
                 value={selBarbero}
                 onChange={e => setSelBarbero(e.target.value)}
-                className="appearance-none bg-surface-2 border border-edge text-sm text-white font-semibold pl-10 pr-9 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition cursor-pointer"
+                className="appearance-none bg-surface-2 border border-edge text-sm text-fg font-semibold pl-10 pr-9 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition cursor-pointer"
               >
                 <option value="all">Todos los Barberos</option>
                 {barberos.map(b => (
@@ -2908,7 +2908,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
                   <div className="flex items-center gap-3">
                     <Avatar name={v.barberos?.nombre || "?"} size="md" />
                     <div>
-                      <p className="text-sm font-bold text-white">{v.barberos?.nombre || "—"}</p>
+                      <p className="text-sm font-bold text-fg">{v.barberos?.nombre || "—"}</p>
                       <p className="text-[10px] text-muted mt-0.5">{dias} día{dias !== 1 ? "s" : ""}</p>
                     </div>
                   </div>
@@ -2959,7 +2959,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Aprobadas</p>
-            <p className="text-3xl font-black text-white mt-1">{String(aprobadas).padStart(2, "0")}</p>
+            <p className="text-3xl font-black text-fg mt-1">{String(aprobadas).padStart(2, "0")}</p>
           </div>
         </div>
  
@@ -2972,7 +2972,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Pendientes</p>
-            <p className="text-3xl font-black text-white mt-1">{String(pendientes).padStart(2, "0")}</p>
+            <p className="text-3xl font-black text-fg mt-1">{String(pendientes).padStart(2, "0")}</p>
           </div>
         </div>
  
@@ -2986,7 +2986,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
           </div>
           <div>
             <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Equipo Total</p>
-            <p className="text-3xl font-black text-white mt-1">{String(totalEquipo).padStart(2, "0")}</p>
+            <p className="text-3xl font-black text-fg mt-1">{String(totalEquipo).padStart(2, "0")}</p>
           </div>
         </div>
       </div>
@@ -3001,7 +3001,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
             <select
               value={form.barbero_id}
               onChange={e => setForm(f => ({ ...f, barbero_id: e.target.value }))}
-              className="w-full bg-surface-3 border border-edge rounded-xl px-4 py-3 text-sm text-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition appearance-none cursor-pointer"
+              className="w-full bg-surface-3 border border-edge rounded-xl px-4 py-3 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition appearance-none cursor-pointer"
             >
               <option value="">Seleccionar barbero...</option>
               {barberos.map(b => (
@@ -3041,7 +3041,7 @@ function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string
             <button
               type="button"
               onClick={() => setModal(false)}
-              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-white hover:border-edge-light transition"
+              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-fg hover:border-edge-light transition"
             >
               Cancelar
             </button>

@@ -28,12 +28,12 @@ export default function Login() {
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="text-center mb-8">
-          <p className="font-black text-white text-2xl tracking-tight">CitasWassap</p>
+          <p className="font-black text-fg text-2xl tracking-tight">CitasWassap</p>
           <p className="text-xs text-muted mt-1 uppercase tracking-widest">Premium Salon Admin</p>
         </div>
 
         <div className="bg-surface border border-edge rounded-3xl p-8">
-          <h1 className="text-2xl font-black text-white mb-1">Bienvenido</h1>
+          <h1 className="text-2xl font-black text-fg mb-1">Bienvenido</h1>
           <p className="text-sm text-muted mb-7">Accede con tu cuenta de administrador.</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -45,7 +45,7 @@ export default function Login() {
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 placeholder="tu@email.com"
-                className="w-full bg-surface-2 border border-edge hover:border-edge-light focus:border-brand rounded-xl px-4 py-3 text-sm text-white placeholder:text-muted focus:outline-none transition-colors"
+                className="w-full bg-surface-2 border border-edge hover:border-edge-light focus:border-brand rounded-xl px-4 py-3 text-sm text-fg placeholder:text-muted focus:outline-none transition-colors"
               />
             </div>
 
@@ -57,7 +57,7 @@ export default function Login() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••"
-                className="w-full bg-surface-2 border border-edge hover:border-edge-light focus:border-brand rounded-xl px-4 py-3 text-sm text-white placeholder:text-muted focus:outline-none transition-colors"
+                className="w-full bg-surface-2 border border-edge hover:border-edge-light focus:border-brand rounded-xl px-4 py-3 text-sm text-fg placeholder:text-muted focus:outline-none transition-colors"
               />
             </div>
 
