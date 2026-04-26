@@ -465,10 +465,27 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                 key={c.id}
                 className={`bg-surface border border-line rounded-xl px-4 py-3.5 shadow-[var(--shadow-1)] group hover:border-line2 hover:shadow-[var(--shadow-2)] transition-all ${cancelada ? "opacity-55" : ""}`}
               >
+                {/* Mobile: hora + precio en top row */}
+                <div className="flex items-center justify-between mb-2.5 sm:hidden">
+                  <div>
+                    <p className="text-[15px] font-mono font-semibold text-fg tabular leading-none">
+                      {c.hora?.substring(0, 5) ?? "—"}
+                    </p>
+                    {c.servicios?.duracion_minutos && (
+                      <p className="text-[11px] text-fg4 mt-0.5 tabular">{c.servicios.duracion_minutos} min</p>
+                    )}
+                  </div>
+                  <span className="text-[13px] font-mono font-semibold text-fg tabular">
+                    {formatEUR(precio)} <span className="text-fg4 font-normal">€</span>
+                  </span>
+                </div>
+                <div className="h-px bg-line2 mb-2.5 sm:hidden" />
+
+                {/* Main row */}
                 <div className="flex items-start gap-3 sm:gap-4">
-                  {/* Time */}
-                  <div className="flex-shrink-0 w-[3.5rem] sm:w-[4rem]">
-                    <p className="text-[15px] sm:text-[16px] font-mono font-semibold text-fg tabular leading-none">
+                  {/* Time — desktop only */}
+                  <div className="hidden sm:block flex-shrink-0 w-[4rem]">
+                    <p className="text-[16px] font-mono font-semibold text-fg tabular leading-none">
                       {c.hora?.substring(0, 5) ?? "—"}
                     </p>
                     {c.servicios?.duracion_minutos && (
@@ -476,8 +493,8 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                     )}
                   </div>
 
-                  {/* Divider */}
-                  <div className="w-px self-stretch bg-line2 flex-shrink-0" />
+                  {/* Vertical divider — desktop only */}
+                  <div className="hidden sm:block w-px self-stretch bg-line2 flex-shrink-0" />
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
@@ -494,27 +511,15 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
                     </div>
                   </div>
 
-                  {/* Price */}
-                  <div className="flex-shrink-0 min-w-[5rem] text-right">
+                  {/* Price — desktop only */}
+                  <div className="hidden sm:block flex-shrink-0 min-w-[5rem] text-right">
                     <span className="text-[13px] font-mono font-semibold text-fg tabular">
                       {formatEUR(precio)} <span className="text-fg4 font-normal">€</span>
                     </span>
                   </div>
 
                   {/* Actions */}
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 min-w-[5.5rem] justify-end">
-                    <button type="button" className="w-7 h-7 flex items-center justify-center rounded-lg text-fg3 hover:text-fg hover:bg-hover transition-colors" title="Mensaje">
-                      <MessageSquare size={13} />
-                    </button>
-                    <button type="button" className="w-7 h-7 flex items-center justify-center rounded-lg text-fg3 hover:text-fg hover:bg-hover transition-colors" title="Editar">
-                      <Pencil size={13} />
-                    </button>
-                    {!cancelada && (
-                      <button type="button" className="w-7 h-7 flex items-center justify-center rounded-lg text-danger hover:bg-danger2 transition-colors" title="Cancelar" onClick={() => cancelar(c.id)}>
-                        <LucideX size={13} />
-                      </button>
-                    )}
-                  </div>
+                  
                 </div>
               </div>
             );
@@ -547,33 +552,57 @@ function SectionEquipo({ toast, empresaId }: { toast: (m: string, t?: string) =>
   const [nombre, setNombre]             = useState("");
   const [selServicios, setSelServicios] = useState<number[]>([]);
   const [loading, setLoading]           = useState(false);
-  const [citasPorBarbero, setCitasPorBarbero] = useState<Record<string, number>>({});
+  const [citasPorBarbero, setCitasPorBarbero]       = useState<Record<string, number>>({});
+  const [ingresosPorBarbero, setIngresosPorBarbero] = useState<Record<string, number>>({});
+  const [sparkPorBarbero, setSparkPorBarbero]       = useState<Record<string, number[]>>({});
   const [tabFiltro, setTabFiltro]       = useState<"todos" | "activos" | "ausentes">("todos");
 
   const cargar = useCallback(async () => {
     setLoading(true);
     const [{ data: b }, { data: s }] = await Promise.all([
-      supabase.from("barberos").select("id, nombre, activo").eq("empresa_id", empresaId).order("id"),
+      supabase.from("barberos").select("id, nombre, activo, telefono").eq("empresa_id", empresaId).order("id"),
       supabase.from("servicios").select("id, nombre").eq("empresa_id", empresaId),
     ]);
     setBarberos(b || []);
     setServicios(s || []);
 
+    const hoy = new Date();
     const inicioMes = fechaHoy().substring(0, 7) + "-01";
-    const { data: citasMes } = await supabase
+    const inicio12sem = new Date(hoy); inicio12sem.setDate(hoy.getDate() - 83);
+    const inicio12semStr = inicio12sem.toISOString().split('T')[0];
+
+    const { data: citas12sem } = await supabase
       .from("citas")
-      .select("barberos(nombre), servicios(precio)")
+      .select("barberos(nombre), servicios(precio), fecha")
       .eq("empresa_id", empresaId)
       .eq("estado", "confirmada")
-      .gte("fecha", inicioMes);
+      .gte("fecha", inicio12semStr);
 
-    if (citasMes?.length) {
+    if (citas12sem?.length) {
       const count: Record<string, number> = {};
-      (citasMes as any[]).forEach(c => {
+      const ingresos: Record<string, number> = {};
+      const spark: Record<string, number[]> = {};
+
+      (citas12sem as any[]).forEach(c => {
         const n = c.barberos?.nombre;
-        if (n) count[n] = (count[n] || 0) + 1;
+        if (!n) return;
+
+        // Monthly stats (current month only)
+        if (c.fecha >= inicioMes) {
+          count[n] = (count[n] || 0) + 1;
+          ingresos[n] = (ingresos[n] || 0) + parseFloat(c.servicios?.precio || 0);
+        }
+
+        // Weekly sparkline (12 weeks)
+        if (!spark[n]) spark[n] = Array(12).fill(0);
+        const daysDiff = Math.floor((new Date(c.fecha).getTime() - inicio12sem.getTime()) / 86400000);
+        const weekIdx = Math.min(Math.max(Math.floor(daysDiff / 7), 0), 11);
+        spark[n][weekIdx]++;
       });
+
       setCitasPorBarbero(count);
+      setIngresosPorBarbero(ingresos);
+      setSparkPorBarbero(spark);
     }
     setLoading(false);
   }, [empresaId]);
@@ -619,7 +648,6 @@ function SectionEquipo({ toast, empresaId }: { toast: (m: string, t?: string) =>
     return true;
   });
 
-  const sparkData = [40, 55, 45, 60, 72, 68, 80, 75, 88, 92, 85, 90];
 
   return (
     <div className="px-4 sm:px-6 py-5 sm:py-7 max-w-[1200px] mx-auto">
@@ -643,8 +671,7 @@ function SectionEquipo({ toast, empresaId }: { toast: (m: string, t?: string) =>
       {/* KPI strip */}
       <KpiStrip items={[
         { label: "Citas del equipo · mes", value: Object.values(citasPorBarbero).reduce((a, b) => a + b, 0), sub: "vs. mes anterior" },
-        { label: "Ingresos generados", value: <span className="font-mono">—</span>, sub: "acumulado mes" },
-        { label: "Valoración media", value: "4,82", sub: "312 reseñas en 30 días" },
+        { label: "Ingresos generados", value: <span className="font-mono">{formatEUR(Object.values(ingresosPorBarbero).reduce((a, b) => a + b, 0))} €</span>, sub: "acumulado mes" },
         { label: "Ocupación media", value: `${activos > 0 ? Math.round((activos / barberos.length) * 100) : 0}%`, sub: "objetivo del trimestre: 70%" },
       ]} />
 
@@ -654,10 +681,10 @@ function SectionEquipo({ toast, empresaId }: { toast: (m: string, t?: string) =>
           <h2 className="text-[15px] font-semibold text-fg">Miembros</h2>
           <p className="text-[12px] text-fg4 mt-0.5">Listado y rendimiento de las últimas 4 semanas</p>
         </div>
-        <div className="flex rounded-lg border border-line overflow-hidden bg-surface">
+        <div className="grid grid-cols-3 sm:flex w-full sm:w-auto rounded-lg border border-line overflow-hidden bg-surface shadow-[var(--shadow-1)]">
           {(["todos","activos","ausentes"] as const).map((t, i) => (
             <button key={t} type="button" onClick={() => setTabFiltro(t)}
-              className={`px-3 sm:px-3.5 py-1.5 text-[12px] sm:text-[12.5px] font-medium capitalize transition-colors ${
+              className={`py-2 sm:py-1.5 sm:px-3.5 text-[12px] sm:text-[12.5px] font-medium text-center transition-colors ${
                 tabFiltro === t ? "bg-selected text-fg" : "text-fg3 hover:text-fg hover:bg-hover"
               } ${i > 0 ? "border-l border-line" : ""}`}>
               {t === "todos" ? "Todos" : t === "activos" ? "Activos" : "En ausencia"}
@@ -673,35 +700,35 @@ function SectionEquipo({ toast, empresaId }: { toast: (m: string, t?: string) =>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtrados.map(b => {
             const citas = citasPorBarbero[b.nombre] ?? 0;
+            const ingresos = ingresosPorBarbero[b.nombre] ?? 0;
             const ocupPct = maxCitas > 0 ? Math.round((citas / maxCitas) * 100) : 0;
             return (
               <div key={b.id} className="bg-surface border border-line rounded-xl p-5 shadow-[var(--shadow-1)] group hover:shadow-[var(--shadow-2)] transition-all">
                 {/* Header */}
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-4 min-h-[3.5rem]">
                   <div className="flex items-center gap-3">
                     <Avatar name={b.nombre} size="lg" />
                     <div>
                       <p className="text-[14px] font-semibold text-fg leading-tight">{b.nombre}</p>
                       <p className="text-[12px] text-accent mt-0.5">{b.especialidad || "Barbero"}</p>
-                      <p className="text-[11.5px] text-fg4 mt-0.5 font-mono">{b.nombre.split(" ")[0].toLowerCase()}@laudable.es</p>
+                      {b.telefono && <p className="text-[11.5px] text-fg4 mt-0.5 font-mono">{b.telefono}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <Badge variant={b.activo ? "success" : "neutral"}>{b.activo ? "Activo" : "Ausente"}</Badge>
                     <button type="button" onClick={() => abrirModal(b)} aria-label="Editar miembro"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg text-fg4 hover:text-fg hover:bg-hover transition-colors opacity-0 group-hover:opacity-100">
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-fg4 hover:text-fg hover:bg-hover transition-colors">
                       <Pencil size={12} />
                     </button>
                   </div>
                 </div>
 
                 {/* Stats */}
-                <div className="grid grid-cols-4 gap-2 border-t border-line pt-3.5 mb-3.5">
+                <div className="grid grid-cols-3 gap-2 border-t border-line pt-3.5 mb-3.5">
                   {[
                     { label: "Citas · Mes", val: citas },
-                    { label: "Ingresos", val: "—" },
+                    { label: "Ingresos", val: ingresos > 0 ? `${formatEUR(ingresos)} €` : "—" },
                     { label: "Ocupación", val: `${ocupPct}%` },
-                    { label: "Valoración", val: "4,82" },
                   ].map(({ label, val }) => (
                     <div key={label}>
                       <p className="text-[9.5px] font-semibold uppercase tracking-wider text-fg4 leading-tight">{label}</p>
@@ -714,7 +741,7 @@ function SectionEquipo({ toast, empresaId }: { toast: (m: string, t?: string) =>
                 <div className="flex items-center justify-between border-t border-line pt-3">
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] text-fg4">Tendencia 12 sem.</span>
-                    <Sparkline values={sparkData} />
+                    <Sparkline values={sparkPorBarbero[b.nombre] ?? []} />
                   </div>
                   <span className="text-[12px] text-accent font-medium">Ver perfil →</span>
                 </div>
@@ -1175,6 +1202,7 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
                         </span>
                         <button
                           type="button"
+                          title="Eliminar turno"
                           onClick={e => { e.stopPropagation(); eliminarSlot(h.id); }}
                           className="w-3.5 h-3.5 flex items-center justify-center text-fg4 hover:text-danger opacity-0 group-hover:opacity-100 transition-all"
                         >
