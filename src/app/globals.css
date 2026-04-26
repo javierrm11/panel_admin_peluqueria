@@ -1,92 +1,162 @@
 @import "tailwindcss";
 
+/* ─── Google Fonts ──────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Inter+Tight:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
 @theme {
-  /* ─── Brand ───────────────────────────────────────────────────────────────
-     Burdeos profundo #7B2D42: evoca cuero, terciopelo, frascos de tratamiento
-     capilar. Saturado y oscuro → contraste ≥ 5.5:1 sobre todos los fondos
-     crema. Nada de violeta genérico de 2024.
-  */
-  --color-brand:        #7B2D42;
-  --color-brand-hover:  #6A2438;
-  --color-brand-dim:    #F5E8EC;   /* tint claro para fondos de badge/highlight */
-  --color-brand-glow:   rgba(123, 45, 66, 0.18);
+  /* ── Tipografía ──────────────────────────────────────────────────────────── */
+  --font-display: 'Inter Tight', 'Inter', system-ui, sans-serif;
+  --font-ui:      'Inter', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', 'Fira Code', monospace;
 
-  /* ─── Backgrounds ─────────────────────────────────────────────────────────
-     Jerarquía invertida: base = más claro (fondo app), surface-3 = más oscuro
-     (elementos elevados). Escala warm-ivory: hueso → lino → pergamino → arena.
-     Cada paso tiene ~4-6 puntos de L* en OKLCH para que sea perceptible.
+  /* ── Escala tipográfica ───────────────────────────────────────────────────── */
+  --t-display: 28px;
+  --t-h1:      20px;
+  --t-h2:      15px;
+  --t-body:    13.5px;
+  --t-meta:    12px;
+  --t-micro:   11px;
 
-     base      #F7F2EA  — marfil cálido, 11% más saturado que #FAFAFA
-     surface   #F0EAE0  — lino suave, tarjetas / cards
-     surface-2 #E8E0D3  — hover, secciones internas, filas alternas
-     surface-3 #DDD4C5  — headers de tabla, elementos elevados, nav activo
-  */
-  --color-base:         #F7F2EA;
-  --color-surface:      #F0EAE0;
-  --color-surface-2:    #E8E0D3;
-  --color-surface-3:    #DDD4C5;
+  /* ── Paleta principal: Grafito + Cobalto ─────────────────────────────────── */
 
-  /* ─── Borders ─────────────────────────────────────────────────────────────
-     Mismo tinte cálido que los fondos. edge-light para separadores sutiles,
-     edge para contornos de card y campos de formulario. Nada de gris frío.
-  */
-  --color-edge:         #CFC5B4;
-  --color-edge-light:   #E2D9CC;
+  /* Superficies */
+  --color-bg:        oklch(98.6% 0.003 240);
+  --color-bg2:       oklch(96.8% 0.004 240);
+  --color-surface:   #ffffff;
+  --color-surface2:  oklch(98.2% 0.003 240);
+  --color-hover:     oklch(95.5% 0.005 240);
+  --color-selected:  oklch(94.5% 0.012 250);
 
-  /* ─── Text ────────────────────────────────────────────────────────────────
-     fg #1C1410: marrón-negro cálido (no #000 agresivo). Ratio ≥ 14:1 sobre
-     base. muted #6B5E52: terracota gris, texto secundario ~4.6:1 (AA).
-     muted-light #9B8E84: placeholders / disabled ~3:1 (AA large text).
-  */
-  --color-fg:           #1C1410;
-  --color-muted:        #6B5E52;
-  --color-muted-light:  #9B8E84;
+  /* Líneas */
+  --color-line:      oklch(91.5% 0.005 240);
+  --color-line2:     oklch(94.8% 0.004 240);
 
-  /* ─── Overlay ─────────────────────────────────────────────────────────────
-     Scrim de modales. En modo claro se reduce la opacidad en el componente,
-     pero el color base sigue siendo oscuro para el contraste del modal.
-  */
-  --color-overlay:      #1C1410;
+  /* Texto */
+  --color-fg:   oklch(20% 0.012 255);
+  --color-fg2:  oklch(38% 0.010 255);
+  --color-fg3:  oklch(55% 0.008 255);
+  --color-fg4:  oklch(70% 0.006 250);
 
-  /* ─── Status ──────────────────────────────────────────────────────────────
-     Versiones desaturadas y más oscuras de los estados: los verde/rojo/amarillo
-     puros "gritan" sobre fondos crema. Bajamos luminosidad +10% y saturación
-     -15% respecto a los valores de modo oscuro.
+  /* Acento cobalto */
+  --color-accent:    oklch(48% 0.18 256);
+  --color-accent2:   oklch(94% 0.045 256);
+  --color-accentb:   oklch(85% 0.07 256);
+  --color-accentfg:  #ffffff;
 
-     success #0F7A5A  — verde salvia profundo, ratio ~5:1 sobre base (AA)
-     danger  #C0392B  — rojo ladrillo, ratio ~5.5:1 (AA)
-     warn    #A0720A  — ámbar tostado, ratio ~5:1 (AA)
-     online  = success (indicador "en línea")
-     neutral #7A7068  — gris cálido para estados neutros
-  */
-  --color-success:      #0F7A5A;
-  --color-danger:       #C0392B;
-  --color-warn:         #A0720A;
-  --color-online:       #0F7A5A;
-  --color-neutral:      #7A7068;
+  /* Semánticos */
+  --color-success:   oklch(58% 0.12 158);
+  --color-success2:  oklch(94% 0.04 158);
+  --color-warning:   oklch(70% 0.13 75);
+  --color-warning2:  oklch(95% 0.04 75);
+  --color-danger:    oklch(58% 0.18 25);
+  --color-danger2:   oklch(95% 0.04 25);
+  --color-info:      oklch(60% 0.13 235);
+  --color-info2:     oklch(94% 0.035 235);
 
-  /* ─── Avatars ─────────────────────────────────────────────────────────────
-     Mismos matices hue que el set oscuro pero con L* más baja y saturación
-     moderada: se ven distinguibles sin "chillar" sobre los fondos crema.
-     Cada uno tiene ratio ≥ 3:1 contra la inicial blanca del avatar (AA).
-  */
-  --color-avatar-1:     #7B2D42;   /* burdeos — igual al brand, cohesión */
-  --color-avatar-2:     #2558A8;   /* azul índigo marino */
-  --color-avatar-3:     #0D6E50;   /* verde bosque */
-  --color-avatar-4:     #A05C0A;   /* ámbar cuero */
-  --color-avatar-5:     #B82244;   /* fucsia oscuro */
-  --color-avatar-6:     #0B7070;   /* verde petróleo */
+  /* Sombras */
+  --shadow-1: 0 1px 0 rgba(15,17,21,.04), 0 1px 2px rgba(15,17,21,.04);
+  --shadow-2: 0 1px 0 rgba(15,17,21,.04), 0 6px 18px -8px rgba(15,17,21,.10);
+
+  /* Espaciado — rejilla 4px */
+  --s-1:  4px;
+  --s-2:  8px;
+  --s-3:  12px;
+  --s-4:  16px;
+  --s-5:  20px;
+  --s-6:  24px;
+  --s-7:  32px;
+  --s-8:  40px;
+  --s-9:  56px;
+
+  /* Radii */
+  --r-1:  4px;
+  --r-2:  6px;
+  --r-3:  8px;
+  --r-4:  10px;
+  --r-5:  12px;
+  --r-6:  16px;
+
+  /* Avatares — hue distinto, mismo chroma */
+  --color-av1: oklch(42% 0.14 30);
+  --color-av2: oklch(44% 0.15 256);
+  --color-av3: oklch(44% 0.13 158);
+  --color-av4: oklch(50% 0.14 75);
+  --color-av5: oklch(44% 0.16 320);
+  --color-av6: oklch(44% 0.13 205);
+
+  /* Overlay */
+  --color-overlay: oklch(20% 0.012 255);
+
+  /* ── Tema alternativo: Papel + Salvia ───────────────────────────────────── */
+  /* Se activa con [data-theme="sage"] en <html> */
+
+  /* ── Tema alternativo: Tinta + Ámbar ────────────────────────────────────── */
+  /* Se activa con [data-theme="amber"] en <html> */
 }
 
-* {
+/* ── Tema Papel + Salvia ──────────────────────────────────────────────────── */
+[data-theme="sage"] {
+  --color-bg:       oklch(97% 0.015 130);
+  --color-bg2:      oklch(95% 0.018 130);
+  --color-surface:  #ffffff;
+  --color-surface2: oklch(96.5% 0.012 130);
+  --color-hover:    oklch(93% 0.022 130);
+  --color-selected: oklch(91% 0.030 140);
+  --color-line:     oklch(89% 0.018 130);
+  --color-line2:    oklch(93% 0.014 130);
+  --color-accent:   oklch(50% 0.16 145);
+  --color-accent2:  oklch(93% 0.040 145);
+  --color-accentb:  oklch(83% 0.07 145);
+  --color-accentfg: #ffffff;
+}
+
+/* ── Tema Tinta + Ámbar ──────────────────────────────────────────────────── */
+[data-theme="amber"] {
+  --color-bg:       oklch(97.5% 0.012 80);
+  --color-bg2:      oklch(95.5% 0.016 80);
+  --color-surface:  #ffffff;
+  --color-surface2: oklch(97% 0.010 80);
+  --color-hover:    oklch(94% 0.020 80);
+  --color-selected: oklch(92% 0.030 75);
+  --color-line:     oklch(90% 0.016 80);
+  --color-line2:    oklch(94% 0.012 80);
+  --color-accent:   oklch(62% 0.17 65);
+  --color-accent2:  oklch(95% 0.045 65);
+  --color-accentb:  oklch(86% 0.08 65);
+  --color-accentfg: #ffffff;
+}
+
+/* ── Reset y base ────────────────────────────────────────────────────────── */
+*, *::before, *::after {
   box-sizing: border-box;
 }
 
 body {
   margin: 0;
-  background-color: var(--color-base);
+  background-color: var(--color-bg);
   color: var(--color-fg);
-  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--font-ui);
+  font-size: var(--t-body);
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* ── Focus visible global ─────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ── Tabular nums en todo elemento numérico comparable ───────────────────── */
+.tabular { font-variant-numeric: tabular-nums; }
+
+/* ── Densidad ─────────────────────────────────────────────────────────────── */
+[data-density="dense"]  { --row-h: 44px; --cell-py: 10px; --cell-px: 14px; }
+[data-density="comfy"]  { --row-h: 56px; --cell-py: 14px; --cell-px: 18px; }
+:root { --row-h: 44px; --cell-py: 10px; --cell-px: 14px; }
+
+/* ── Scrollbar minimalista ───────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 3px; }

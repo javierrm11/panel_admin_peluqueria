@@ -7,8 +7,8 @@ import AdminShell from '@/components/AdminShell'
 
 function Spinner() {
   return (
-    <div className="min-h-screen bg-base flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-surface-3 border-t-brand rounded-full animate-spin" />
+    <div className="min-h-screen bg-bg flex items-center justify-center">
+      <div className="w-5 h-5 border-2 border-line2 border-t-accent rounded-full animate-spin" />
     </div>
   )
 }
@@ -27,7 +27,7 @@ export default function DashboardPage() {
   if (loading || !session || !empresaId) return <Spinner />
 
   return (
-    <AdminShell seccion={seccion} onSeccionChange={setSeccion}>
+    <AdminShell seccion={seccion} onSeccionChange={setSeccion} empresaId={empresaId}>
       <Dashboard empresaId={empresaId} seccion={seccion} />
     </AdminShell>
   )

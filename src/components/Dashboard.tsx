@@ -1,6 +1,12 @@
 'use client'
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../lib/supabase";
+import {
+  Scissors, Wind, Droplets, Leaf, FlaskConical, Sparkles,
+  Plus, Filter, Download, Copy, Save, MessageSquare, Pencil,
+  X as LucideX, Trash2, CalendarDays, ChevronRight,
+  TrendingUp, TrendingDown, Clock, Check,
+} from "lucide-react";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -14,12 +20,16 @@ const DIAS_SEMANA = [
   { id: 7, label: "Domingo" },
 ];
 
-const AVATAR_COLORS = [
-  "bg-avatar-1", "bg-avatar-2", "bg-avatar-3",
-  "bg-avatar-4", "bg-avatar-5", "bg-avatar-6",
+const AV_COLORS = [
+  { bg: "bg-av1", text: "text-white" },
+  { bg: "bg-av2", text: "text-white" },
+  { bg: "bg-av3", text: "text-white" },
+  { bg: "bg-av4", text: "text-white" },
+  { bg: "bg-av5", text: "text-white" },
+  { bg: "bg-av6", text: "text-white" },
 ];
 
-const SERVICIO_ICONS = ["✂️", "🪒", "💆", "🧴", "💈", "🪮"];
+const LUCIDE_SERVICE_ICONS = [Scissors, Wind, Droplets, Leaf, FlaskConical, Sparkles];
 
 // ─── Utils ────────────────────────────────────────────────────────────────────
 
@@ -33,108 +43,147 @@ function fechaSemana() {
   lunes.setDate(hoy.getDate() - ((hoy.getDay() + 6) % 7));
   const domingo = new Date(lunes);
   domingo.setDate(lunes.getDate() + 6);
+  return { inicio: lunes.toISOString().split("T")[0], fin: domingo.toISOString().split("T")[0] };
+}
+
+function fechaMes() {
+  const hoy = new Date();
   return {
-    inicio: lunes.toISOString().split("T")[0],
-    fin: domingo.toISOString().split("T")[0],
+    inicio: `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`,
+    fin: hoy.toISOString().split("T")[0],
   };
 }
 
-function formatFecha(fecha: string) {
-  if (!fecha) return "";
+function formatFechaCorta(fecha: string) {
+  if (!fecha) return "—";
   const [y, m, d] = fecha.split("-");
   const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-  return `${d} ${meses[parseInt(m) - 1]}, ${y}`;
+  return `${d} ${meses[parseInt(m) - 1]}`;
 }
 
-function avatarColor(name: string) {
-  return AVATAR_COLORS[(name?.charCodeAt(0) || 0) % AVATAR_COLORS.length];
+function formatFecha(fecha: string) {
+  if (!fecha) return "—";
+  const parts = fecha.split("-");
+  const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+  return `${parts[2]} ${meses[parseInt(parts[1]) - 1]} ${parts[0]}`;
+}
+
+function formatEUR(n: number) {
+  return n.toLocaleString("es-ES", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function diasEntre(inicio: string, fin: string) {
+  if (!inicio || !fin) return 0;
+  const a = new Date(inicio), b = new Date(fin);
+  return Math.ceil((b.getTime() - a.getTime()) / 86400000) + 1;
+}
+
+function avColor(name: string) {
+  return AV_COLORS[(name?.charCodeAt(0) || 0) % AV_COLORS.length];
+}
+
+function fechaAgendaLabel() {
+  const now = new Date();
+  const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
+  const meses = ["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+  return `${dias[now.getDay()]}, ${now.getDate()} de ${meses[now.getMonth()]}`;
 }
 
 // ─── Primitives ───────────────────────────────────────────────────────────────
 
-function Label({ children }: { children: React.ReactNode }) {
+function Avatar({ name, size = "md" }: { name: string; size?: "xs" | "sm" | "md" | "lg" }) {
+  const sz = {
+    xs: "w-5 h-5 text-[9px]",
+    sm: "w-6 h-6 text-[10px]",
+    md: "w-8 h-8 text-[12px]",
+    lg: "w-10 h-10 text-[14px]",
+  }[size];
+  const { bg, text } = avColor(name);
+  const inits = name?.split(" ").filter(Boolean).map(w => w[0]).join("").toUpperCase().slice(0, 2) ?? "?";
   return (
-    <p className="text-[10px] font-bold text-muted uppercase tracking-widest">
+    <div className={`${sz} ${bg} ${text} rounded-full flex items-center justify-center font-bold flex-shrink-0`}>
+      {inits}
+    </div>
+  );
+}
+
+function Badge({
+  variant = "neutral", children,
+}: { variant?: "success" | "warning" | "danger" | "info" | "neutral"; children: React.ReactNode }) {
+  const map = {
+    success: { dot: "bg-success", cls: "bg-success2 text-success border-success/20" },
+    warning: { dot: "bg-warning", cls: "bg-warning2 text-warning border-warning/20" },
+    danger:  { dot: "bg-danger",  cls: "bg-danger2 text-danger border-danger/20"   },
+    info:    { dot: "bg-info",    cls: "bg-info2 text-info border-info/20"         },
+    neutral: { dot: "bg-fg4",     cls: "bg-hover text-fg3 border-line"             },
+  }[variant];
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2 py-[3px] rounded-[4px] text-[11px] font-semibold border ${map.cls}`}>
+      <span className={`w-[5px] h-[5px] rounded-full flex-shrink-0 ${map.dot}`} />
       {children}
-    </p>
+    </span>
   );
 }
 
-function Avatar({ name, size = "md" }: { name: string; size?: "sm" | "md" | "lg" }) {
-  const sz = { sm: "w-6 h-6 text-[10px]", md: "w-9 h-9 text-sm", lg: "w-11 h-11 text-base" }[size];
+function IconChip({ Icon, variant = "neutral" }: { Icon: React.ElementType; variant?: "neutral" | "accent" }) {
+  const cls = variant === "accent"
+    ? "bg-accent2 text-accent border-accent/20"
+    : "bg-surface border-line text-fg3";
   return (
-    <div className={`${sz} ${avatarColor(name)} rounded-full flex items-center justify-center text-white font-bold flex-shrink-0`}>
-      {name?.[0] ?? "?"}
+    <div className={`w-7 h-7 rounded-lg flex items-center justify-center border flex-shrink-0 ${cls}`}>
+      <Icon size={14} strokeWidth={1.5} />
     </div>
   );
 }
 
-function StatusBadge({ estado }: { estado: string }) {
-  return estado === "confirmada" ? (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-success/15 text-success border border-success/20">
-      Confirmada
-    </span>
-  ) : (
-    <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-danger/15 text-danger border border-danger/20">
-      Cancelada
-    </span>
-  );
-}
-
-function ActiveBadge({ activo }: { activo: boolean }) {
+function Spinner() {
   return (
-    <span className={`inline-flex items-center px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border ${
-      activo
-        ? "bg-success/15 text-success border-success/20"
-        : "bg-surface-3 text-muted border-edge"
-    }`}>
-      {activo ? "Activo" : "Inactivo"}
-    </span>
-  );
-}
-
-function Input({
-  label, suffix, className = "", ...props
-}: { label?: string; suffix?: string; className?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className={`flex flex-col gap-1.5 ${className}`}>
-      {label && <Label>{label}</Label>}
-      <div className="relative">
-        <input
-          className="w-full bg-surface-3 border border-edge rounded-xl px-4 py-3 text-sm text-fg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition"
-          {...props}
-        />
-        {suffix && (
-          <span className="absolute right-4 top-1/2 -translate-y-1/2 text-muted text-xs font-bold">
-            {suffix}
-          </span>
-        )}
-      </div>
+    <div className="flex flex-col items-center justify-center py-20 gap-3">
+      <div className="w-5 h-5 border-2 border-line2 border-t-accent rounded-full animate-spin" />
+      <p className="text-[13px] text-fg3">Cargando...</p>
     </div>
   );
 }
 
-function Modal({
-  open, onClose, title, children,
-}: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) {
+function Empty({ msg, icon }: { msg: string; icon?: React.ReactNode }) {
+  return (
+    <div className="py-16 text-center">
+      {icon && <div className="flex justify-center mb-4">{icon}</div>}
+      <p className="text-[13px] text-fg3">{msg}</p>
+    </div>
+  );
+}
+
+function Toast({ message, type = "success" }: { message: string; type?: string }) {
+  if (!message) return null;
+  return (
+    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-surface border border-line text-fg text-[13px] font-medium px-4 py-3 rounded-xl shadow-[var(--shadow-2)]">
+      <span className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] font-black text-white ${type === "success" ? "bg-success" : "bg-danger"}`}>
+        {type === "success" ? "✓" : "✕"}
+      </span>
+      {message}
+    </div>
+  );
+}
+
+function Modal({ open, onClose, title, children }: {
+  open: boolean; onClose: () => void; title: string; children: React.ReactNode
+}) {
   if (!open) return null;
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay/50 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="bg-surface-2 border border-edge rounded-3xl shadow-2xl w-full max-w-md mx-4 p-7"
+        className="bg-surface border border-line rounded-2xl w-full max-w-md mx-4 p-6 shadow-[var(--shadow-2)]"
         onClick={e => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-6">
-          <h3 className="font-bold text-fg text-xl">{title}</h3>
+        <div className="flex items-center justify-between mb-5">
+          <h3 className="font-semibold text-fg text-[16px]">{title}</h3>
           <button
             type="button"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-muted hover:text-fg hover:bg-surface-3 transition text-lg leading-none"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-fg3 hover:text-fg hover:bg-hover transition-colors"
           >
-            ✕
+            <LucideX size={16} />
           </button>
         </div>
         {children}
@@ -143,40 +192,117 @@ function Modal({
   );
 }
 
-function Toast({ message, type = "success" }: { message: string; type?: string }) {
-  if (!message) return null;
+function FormInput({
+  label, ...props
+}: { label?: string } & React.InputHTMLAttributes<HTMLInputElement>) {
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex items-center gap-3 bg-surface-2 border border-edge text-fg text-sm font-semibold px-5 py-3.5 rounded-2xl shadow-2xl">
-      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-black ${
-        type === "success" ? "bg-success" : "bg-danger"
-      }`}>
-        {type === "success" ? "✓" : "✕"}
-      </span>
-      {message}
+    <div className="flex flex-col gap-1.5">
+      {label && (
+        <label className="text-[11px] font-semibold uppercase tracking-widest text-fg3">
+          {label}
+        </label>
+      )}
+      <input
+        className="w-full bg-bg border border-line rounded-lg px-3 py-2.5 text-[13px] text-fg placeholder:text-fg4 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition"
+        {...props}
+      />
     </div>
   );
 }
 
-function Spinner() {
+function FormSelect({
+  label, children, ...props
+}: { label?: string } & React.SelectHTMLAttributes<HTMLSelectElement>) {
   return (
-    <div className="flex flex-col items-center justify-center py-20 gap-3">
-      <div className="w-6 h-6 border-2 border-edge border-t-brand rounded-full animate-spin" />
-      <p className="text-sm text-muted">Cargando...</p>
+    <div className="flex flex-col gap-1.5">
+      {label && (
+        <label className="text-[11px] font-semibold uppercase tracking-widest text-fg3">
+          {label}
+        </label>
+      )}
+      <select
+        className="w-full bg-bg border border-line rounded-lg px-3 py-2.5 text-[13px] text-fg focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent/50 transition appearance-none cursor-pointer"
+        {...props}
+      >
+        {children}
+      </select>
     </div>
   );
 }
 
-function Empty({ msg }: { msg: string }) {
+// ─── KPI Strip ────────────────────────────────────────────────────────────────
+
+function KpiStrip({ items }: { items: { label: string; value: React.ReactNode; sub?: string; accent?: boolean }[] }) {
+  const cols = 2;
   return (
-    <div className="py-20 text-center text-muted text-sm">{msg}</div>
+    <div className="bg-surface border border-line rounded-xl overflow-hidden mb-5 sm:mb-6 shadow-[var(--shadow-1)]">
+      <div className="grid grid-cols-2 sm:grid-cols-4">
+        {items.map((item, i) => {
+          const isLastMobileCol = (i + 1) % cols === 0;
+          const isLastMobileRow = i >= items.length - cols;
+          const isLastDesktopCol = i === items.length - 1;
+          return (
+            <div
+              key={i}
+              className={`px-4 sm:px-5 py-3.5 sm:py-4 min-w-0
+                ${!isLastMobileCol ? 'border-r border-line' : ''}
+                ${!isLastMobileRow ? 'border-b border-line sm:border-b-0' : ''}
+                ${!isLastDesktopCol ? 'sm:border-r sm:border-line' : ''}
+              `}
+            >
+              <p className="text-[10px] sm:text-[10.5px] font-semibold uppercase tracking-widest text-fg4 mb-1.5">{item.label}</p>
+              <p className={`font-semibold leading-none tabular ${item.accent ? "text-[20px] sm:text-[22px] text-fg font-display" : "text-[18px] sm:text-[20px] text-fg"}`}>
+                {item.value}
+              </p>
+              {item.sub && <p className="text-[11px] sm:text-[11.5px] text-fg4 mt-1.5 leading-snug">{item.sub}</p>}
+            </div>
+          );
+        })}
+      </div>
+    </div>
   );
 }
 
-// ─── TABLE HEADER CELL ────────────────────────────────────────────────────────
+// ─── Sparkline ────────────────────────────────────────────────────────────────
 
-function TH({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+function Sparkline({ values, color = "var(--color-accent)" }: { values: number[]; color?: string }) {
+  if (values.length < 2) return <span className="text-fg4 text-[11px]">—</span>;
+  const max = Math.max(...values), min = Math.min(...values);
+  const range = max - min || 1;
+  const w = 56, h = 20;
+  const pts = values.map((v, i) => {
+    const x = (i / (values.length - 1)) * w;
+    const y = h - ((v - min) / range) * (h - 4) - 2;
+    return `${x},${y}`;
+  });
   return (
-    <span className={`text-[10px] font-bold text-muted uppercase tracking-widest ${className}`}>
+    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} fill="none">
+      <polyline points={pts.join(" ")} stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+// ─── Occupation bar ──────────────────────────────────────────────────────────
+
+function OccBar({ pct }: { pct: number }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 h-1.5 bg-hover rounded-full overflow-hidden min-w-12">
+        <div
+          className="h-full rounded-full bg-accent"
+          style={{ width: `${Math.min(100, pct)}%` }}
+        />
+      </div>
+      <span className="text-[12px] tabular text-fg2 font-medium w-7 text-right">{pct}%</span>
+    </div>
+  );
+}
+
+// ─── Table Header ─────────────────────────────────────────────────────────────
+
+function THead({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  return (
+    <span className={`text-[10.5px] font-semibold uppercase tracking-widest text-fg4 ${className}`}>
       {children}
     </span>
   );
@@ -185,65 +311,21 @@ function TH({ children, className = "" }: { children: React.ReactNode; className
 // ─── SECTION: CITAS ───────────────────────────────────────────────────────────
 
 type CitaVista = "hoy" | "semana" | "mes";
-
-function fechaMes() {
-  const hoy = new Date();
-  const inicio = `${hoy.getFullYear()}-${String(hoy.getMonth() + 1).padStart(2, "0")}-01`;
-  return { inicio, fin: hoy.toISOString().split("T")[0] };
-}
-
-function formatHora12(hora: string) {
-  if (!hora) return { time: "—", period: "" };
-  const [h, m] = hora.split(":");
-  const hour = parseInt(h);
-  const period = hour >= 12 ? "PM" : "AM";
-  const h12 = hour === 0 ? 12 : hour > 12 ? hour - 12 : hour;
-  return { time: `${String(h12).padStart(2, "0")}:${m}`, period };
-}
-
-function fechaAgendaLabel() {
-  const now = new Date();
-  const dias = ["Domingo","Lunes","Martes","Miércoles","Jueves","Viernes","Sábado"];
-  const meses = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  return `${dias[now.getDay()]}, ${now.getDate()} ${meses[now.getMonth()].toUpperCase()}`;
-}
-
-function CitaStatusPill({ estado }: { estado: string }) {
-  const map: Record<string, { label: string; cls: string }> = {
-    confirmada: { label: "Confirmada", cls: "bg-success/15 text-success border-success/20" },
-    pendiente:  { label: "Pendiente",  cls: "bg-surface-3 text-muted border-edge" },
-    cancelada:  { label: "Cancelada",  cls: "bg-danger/15 text-danger border-danger/20" },
-  };
-  const s = map[estado] ?? { label: estado, cls: "bg-surface-3 text-muted border-edge" };
-  return (
-    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${s.cls}`}>
-      {s.label}
-    </span>
-  );
-}
-
-const VISTAS_CITAS: { id: CitaVista; label: string }[] = [
-  { id: "hoy",    label: "Hoy" },
-  { id: "semana", label: "Esta semana" },
-  { id: "mes",    label: "Este mes" },
-];
-
-const PER_PAGE = 10;
+const PER_PAGE = 15;
 
 function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
   const [vista, setVista] = useState<CitaVista>("hoy");
   const [citas, setCitas] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
+  const [ocultarCanceladas, setOcultarCanceladas] = useState(false);
 
   const cargar = useCallback(async () => {
     setLoading(true);
     setPage(0);
     const { inicio, fin } = vista === "hoy"
       ? { inicio: fechaHoy(), fin: fechaHoy() }
-      : vista === "semana"
-      ? fechaSemana()
-      : fechaMes();
+      : vista === "semana" ? fechaSemana() : fechaMes();
     const { data } = await supabase
       .from("citas")
       .select("id, fecha, hora, estado, clientes(nombre, telefono), servicios(nombre, precio, duracion_minutos), barberos(nombre)")
@@ -258,534 +340,206 @@ function SectionCitas({ toast, empresaId }: { toast: (m: string, t?: string) => 
 
   async function cancelar(id: string) {
     await supabase.from("citas").update({ estado: "cancelada" }).eq("id", id);
-    toast("Cita cancelada correctamente", "success");
+    toast("Cita cancelada", "success");
     cargar();
   }
 
   const confirmadas = citas.filter(c => c.estado === "confirmada");
+  const pendientes  = citas.filter(c => c.estado === "pendiente");
   const canceladas  = citas.filter(c => c.estado === "cancelada");
   const proxima     = confirmadas[0];
+  const ingresos    = confirmadas.reduce((a, c) => a + parseFloat(c.servicios?.precio || 0), 0);
   const ocupacion   = citas.length > 0 ? Math.round((confirmadas.length / citas.length) * 100) : 0;
-  const totalPages  = Math.max(1, Math.ceil(citas.length / PER_PAGE));
-  const pageCitas   = citas.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+
+  const citasFiltradas = ocultarCanceladas ? citas.filter(c => c.estado !== "cancelada") : citas;
+  const totalPages = Math.max(1, Math.ceil(citasFiltradas.length / PER_PAGE));
+  const pageCitas  = citasFiltradas.slice(page * PER_PAGE, (page + 1) * PER_PAGE);
+
+  const estadoMap: Record<string, { label: string; variant: "success"|"warning"|"danger"|"info"|"neutral" }> = {
+    confirmada: { label: "Confirmada", variant: "success" },
+    pendiente:  { label: "Pendiente",  variant: "warning" },
+    cancelada:  { label: "Cancelada",  variant: "neutral" },
+    en_curso:   { label: "En curso",   variant: "info"    },
+  };
 
   return (
-    <div>
-      {/* ── MOBILE layout ── */}
-      <div className="md:hidden">
-        <p className="text-sm text-muted mb-5">Gestiona tu agenda nocturna.</p>
-
-        {/* PRÓXIMA CITA card */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 mb-4 relative overflow-hidden">
-          <Label>Próxima Cita</Label>
-          {proxima ? (
-            <div className="mt-2 pr-12">
-              <p className="text-2xl font-black text-fg leading-tight">
-                {proxima.hora?.substring(0, 5)} — {proxima.servicios?.nombre}
-              </p>
-              <p className="text-xs text-muted mt-2">
-                Cliente: {proxima.clientes?.nombre || proxima.clientes?.telefono || "—"} • Barber: {proxima.barberos?.nombre}
-              </p>
-            </div>
-          ) : (
-            <p className="text-xl font-black text-muted mt-2">Sin citas confirmadas</p>
-          )}
-          <div className="absolute top-4 right-4 w-10 h-10 bg-surface-3 border border-edge rounded-xl flex items-center justify-center text-brand flex-shrink-0">
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2l1.5 4.5L18 8l-4.5 1.5L12 14l-1.5-4.5L6 8l4.5-1.5L12 2zM5 16l.75 2.25L8 19l-2.25.75L5 22l-.75-2.25L2 19l2.25-.75L5 16zM19 16l.75 2.25L22 19l-2.25.75L19 22l-.75-2.25L16 19l2.25-.75L19 16z"/>
-            </svg>
-          </div>
+    <div className="px-4 sm:px-6 py-5 sm:py-7 max-w-[1200px] mx-auto">
+      {/* Page header */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-5">
+        <div>
+          <h1 className="text-[22px] sm:text-[26px] font-semibold text-fg font-display leading-tight">Citas</h1>
+          <p className="text-[12.5px] sm:text-[13px] text-fg3 mt-0.5">
+            {fechaAgendaLabel()} · {citas.length} reservas · {confirmadas.length} confirmadas
+          </p>
         </div>
-
-        {/* Stats: Confirmadas + Canceladas */}
-        <div className="grid grid-cols-2 gap-3 mb-4">
-          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-success/15 border border-success/20 rounded-lg flex items-center justify-center text-success flex-shrink-0">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-              </div>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Confirmadas</p>
-            </div>
-            <p className="text-3xl font-black text-fg">{confirmadas.length}</p>
-          </div>
-          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-6 h-6 bg-danger/15 border border-danger/20 rounded-lg flex items-center justify-center text-danger flex-shrink-0">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                  <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/>
-                </svg>
-              </div>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Canceladas</p>
-            </div>
-            <p className="text-3xl font-black text-fg">{canceladas.length}</p>
-          </div>
-        </div>
-
-        {/* Filtrar */}
-        <div className="flex justify-end mb-3">
-          <button
-            type="button"
-            className="flex items-center gap-1.5 text-xs font-bold text-muted hover:text-fg transition"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M3 6h18M7 12h10M10 18h4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Filtrar
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button type="button" className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors">
+            <Filter size={13} /> <span className="hidden sm:inline">Filtros</span>
+          </button>
+          <button type="button" className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors">
+            <Download size={13} /> <span className="hidden sm:inline">Exportar</span>
+          </button>
+          <button type="button" className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[12.5px] sm:text-[13px] font-semibold hover:bg-accent/90 transition-colors whitespace-nowrap">
+            <Plus size={13} /> Nueva cita
           </button>
         </div>
-
-        {/* Appointment list */}
-        {loading ? <Spinner /> : citas.length === 0 ? (
-          <Empty msg="No hay citas para este período" />
-        ) : (
-          <div className="space-y-2">
-            {citas.map(c => {
-              const cancelada = c.estado === "cancelada";
-              const hora24 = c.hora?.substring(0, 5) || "—";
-              const duracion = c.servicios?.duracion_minutos;
-              const mstMap: Record<string, { label: string; cls: string }> = {
-                confirmada: { label: "CONFIRMADA", cls: "bg-success/15 text-success border-success/20" },
-                pendiente:  { label: "EN ESPERA",  cls: "bg-surface-3 text-muted border-edge" },
-                cancelada:  { label: "CANCELADA",  cls: "bg-danger/15 text-danger border-danger/30" },
-              };
-              const mst = mstMap[c.estado] ?? mstMap.pendiente;
-              return (
-                <div key={c.id} className={`bg-surface-2 border border-edge rounded-2xl p-4 transition-opacity ${cancelada ? "opacity-50" : ""}`}>
-                  <div className="flex items-center gap-3">
-                    {/* Time + duration */}
-                    <div className="flex-shrink-0 w-14 text-center">
-                      <p className={`text-[17px] font-black text-fg leading-tight ${cancelada ? "line-through" : ""}`}>{hora24}</p>
-                      {duracion && <p className="text-[9px] font-bold text-muted uppercase tracking-wide mt-0.5">{duracion} min</p>}
-                    </div>
-                    {/* Service + Barber */}
-                    <div className="flex-1 min-w-0">
-                      <p className={`text-sm font-bold text-fg truncate ${cancelada ? "line-through" : ""}`}>
-                        {c.servicios?.nombre}
-                      </p>
-                      <div className="flex items-center gap-1 mt-0.5">
-                        <svg className="w-3 h-3 text-muted flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path d="M6 2l4 4-4 4M14 6H6M18 2l4 4-4 4M14 18h4M6 14l4 4-4 4M10 18H6" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                        <p className="text-[10px] text-muted truncate">Barber: {c.barberos?.nombre}</p>
-                      </div>
-                    </div>
-                    {/* Status */}
-                    <span className={`text-[9px] font-bold border px-2 py-1 rounded-lg flex-shrink-0 uppercase tracking-wide ${mst.cls}`}>
-                      {mst.label}
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* FAB */}
-        <button
-          type="button"
-          className="fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand rounded-full shadow-2xl flex items-center justify-center text-white hover:bg-brand/90 active:scale-95 transition-transform"
-          aria-label="Nueva cita"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
-          </svg>
-        </button>
       </div>
 
-      {/* ── DESKTOP layout ── */}
-      <div className="hidden md:block">
-        {/* Page header */}
-        <div className="flex items-start justify-between mb-7">
-          <div>
-            <h2 className="text-3xl font-black text-fg">Gestión de Citas</h2>
-            <p className="text-sm text-muted mt-1">Administra el flujo de trabajo de hoy y visualiza las reservas de la semana.</p>
-          </div>
-          <div className="flex bg-surface-2 border border-edge rounded-2xl p-1 gap-0.5">
-            {VISTAS_CITAS.map(v => (
+      {/* KPI strip */}
+      <KpiStrip items={[
+        {
+          label: "Próxima cita",
+          value: proxima ? (
+            <span className="font-mono font-semibold">{proxima.hora?.substring(0, 5) ?? "—"}</span>
+          ) : "—",
+          sub: proxima ? `${proxima.clientes?.nombre ?? proxima.clientes?.telefono ?? "—"} · ${proxima.servicios?.nombre ?? "—"}` : "Sin citas confirmadas",
+          accent: true,
+        },
+        {
+          label: "Confirmadas",
+          value: confirmadas.length,
+          sub: `de ${citas.length} totales · ${ocupacion}% ocupación`,
+        },
+        {
+          label: "Pendientes",
+          value: pendientes.length,
+          sub: pendientes.length > 0 ? "esperan confirmación" : "Sin pendientes",
+        },
+        {
+          label: "Ingresos previstos",
+          value: <span className="font-mono">{formatEUR(ingresos)} €</span>,
+          sub: `${canceladas.length > 0 ? `${canceladas.length} cancelada${canceladas.length !== 1 ? "s" : ""} hoy` : "Sin cancelaciones"}`,
+        },
+      ]} />
+
+      {/* Agenda toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+        <div>
+          <h2 className="text-[15px] font-semibold text-fg">Agenda</h2>
+          <p className="text-[12px] text-fg4 mt-0.5">{citasFiltradas.length} citas · vista por hora y barbero</p>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <label className="flex items-center gap-2 cursor-pointer select-none text-[12px] sm:text-[12.5px] text-fg3">
+            <button
+              type="button"
+              role="switch"
+              aria-checked={ocultarCanceladas ? "true" : "false"}
+              aria-label="Ocultar citas canceladas"
+              onClick={() => setOcultarCanceladas(v => !v)}
+              className={`relative w-8 h-[18px] rounded-full transition-colors flex-shrink-0 ${ocultarCanceladas ? "bg-accent" : "bg-line"}`}
+            >
+              <span className={`absolute top-0.5 left-0.5 w-3.5 h-3.5 bg-white rounded-full shadow transition-transform ${ocultarCanceladas ? "translate-x-3.5" : ""}`} />
+            </button>
+            Ocultar canceladas
+          </label>
+          <div className="flex rounded-lg border border-line overflow-hidden bg-surface">
+            {(["hoy", "semana", "mes"] as CitaVista[]).map((v, i) => (
               <button
+                key={v}
                 type="button"
-                key={v.id}
-                onClick={() => setVista(v.id)}
-                className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wide transition-all ${
-                  vista === v.id
-                    ? "bg-brand text-white shadow"
-                    : "text-muted hover:text-fg"
-                }`}
+                onClick={() => setVista(v)}
+                className={`px-3 sm:px-3.5 py-1.5 text-[12px] sm:text-[12.5px] font-medium transition-colors ${
+                  vista === v ? "bg-selected text-fg" : "text-fg3 hover:text-fg hover:bg-hover"
+                } ${i > 0 ? "border-l border-line" : ""}`}
               >
-                {v.label}
+                {v === "hoy" ? "Hoy" : v === "semana" ? "Semana" : "Mes"}
               </button>
             ))}
           </div>
         </div>
-
-        {/* Stat cards */}
-        <div className="grid grid-cols-3 gap-4 mb-6">
-        {/* Next appointment */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <Label>Próxima Cita</Label>
-            <div className="mt-3">
-              {proxima ? (
-                <>
-                  <div className="flex items-baseline gap-1.5">
-                    <p className="text-3xl font-black text-fg leading-none">
-                      {formatHora12(proxima.hora).time}
-                    </p>
-                    <span className="text-sm font-bold text-muted">{formatHora12(proxima.hora).period}</span>
-                  </div>
-                  <p className="text-xs text-muted mt-2 truncate">
-                    {proxima.servicios?.nombre} — {proxima.barberos?.nombre}
-                  </p>
-                </>
-              ) : (
-                <p className="text-3xl font-black text-muted leading-none">—</p>
-              )}
-            </div>
-          </div>
-          <div className="w-10 h-10 bg-surface-3 border border-edge rounded-xl flex items-center justify-center text-muted flex-shrink-0 ml-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-              <rect x="3" y="4" width="18" height="18" rx="2" />
-              <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Confirmed */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <Label>Confirmadas</Label>
-            <p className="text-4xl font-black text-fg mt-3 leading-none">{confirmadas.length}</p>
-            <p className="text-xs text-muted mt-2">{ocupacion}% de ocupación</p>
-          </div>
-          <div className="w-10 h-10 bg-success/15 border border-success/20 rounded-xl flex items-center justify-center text-success flex-shrink-0 ml-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
-        </div>
-
-        {/* Cancelled */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-start justify-between">
-          <div className="flex-1 min-w-0">
-            <Label>Canceladas</Label>
-            <p className="text-4xl font-black text-fg mt-3 leading-none">{canceladas.length}</p>
-            <p className="text-xs text-muted mt-2">
-              {citas.length > 0 ? `${Math.round((canceladas.length / citas.length) * 100)}% del total` : "Sin citas"}
-            </p>
-          </div>
-          <div className="w-10 h-10 bg-danger/15 border border-danger/20 rounded-xl flex items-center justify-center text-danger flex-shrink-0 ml-3">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-            </svg>
-          </div>
-        </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
-        {/* Table title */}
-        <div className="px-6 py-4 border-b border-edge flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-fg">Agenda Detallada</h3>
-            <p className="text-[10px] text-muted uppercase tracking-widest mt-0.5">{fechaAgendaLabel()}</p>
-          </div>
-        </div>
-
-        {/* Headers */}
-        <div className="grid px-6 py-3 border-b border-edge" style={{ gridTemplateColumns: "7rem 1fr 9rem 10rem 8rem 6rem" }}>
-          <TH>Hora</TH>
-          <TH>Servicio</TH>
-          <TH>Barbero</TH>
-          <TH>Cliente</TH>
-          <TH>Estado</TH>
-          <TH className="text-center">Acción</TH>
-        </div>
-
-        {loading ? <Spinner /> : citas.length === 0 ? (
-          <Empty msg="No hay citas para este período" />
-        ) : (
-          <>
-            {pageCitas.map((c, i) => {
-              const cancelada = c.estado === "cancelada";
-              const { time, period } = formatHora12(c.hora);
-              const duracion = c.servicios?.duracion_minutos;
-              const clienteNombre = c.clientes?.nombre || c.clientes?.telefono || "—";
-              return (
-                <div
-                  key={c.id}
-                  className={`grid px-6 py-4 items-center transition-colors hover:bg-surface-3/40 ${
-                    i < pageCitas.length - 1 ? "border-b border-edge/50" : ""
-                  } ${cancelada ? "opacity-50" : ""}`}
-                  style={{ gridTemplateColumns: "7rem 1fr 9rem 10rem 8rem 6rem" }}
-                >
-                  {/* TIME */}
-                  <div>
-                    <div className="flex items-baseline gap-1">
-                      <span className={`text-sm font-bold text-fg ${cancelada ? "line-through" : ""}`}>{time}</span>
-                      <span className="text-[10px] text-muted font-semibold">{period}</span>
-                    </div>
-                    {duracion && (
-                      <p className="text-[10px] text-muted mt-0.5">{duracion} min</p>
-                    )}
-                  </div>
-
-                  {/* SERVICE */}
-                  <div className="flex items-center gap-2.5 pr-4 min-w-0">
-                    <div className="w-8 h-8 rounded-lg bg-surface-3 border border-edge flex items-center justify-center text-base flex-shrink-0">
-                      {SERVICIO_ICONS[0]}
-                    </div>
-                    <div className="min-w-0">
-                      <p className={`text-sm font-semibold text-fg truncate ${cancelada ? "line-through" : ""}`}>
-                        {c.servicios?.nombre}
-                      </p>
-                      <p className="text-[10px] text-muted mt-0.5">{c.servicios?.precio} €</p>
-                    </div>
-                  </div>
-
-                  {/* BARBER */}
-                  <div className="flex items-center gap-2">
-                    <Avatar name={c.barberos?.nombre || "?"} size="sm" />
-                    <p className="text-sm text-muted-light font-medium truncate">{c.barberos?.nombre}</p>
-                  </div>
-
-                  {/* CLIENT */}
-                  <div>
-                    <p className={`text-sm font-semibold text-fg truncate ${cancelada ? "line-through" : ""}`}>
-                      {clienteNombre}
+      {/* Cita cards */}
+      {loading ? (
+        <Spinner />
+      ) : citasFiltradas.length === 0 ? (
+        <Empty msg="No hay citas para este período" />
+      ) : (
+        <div className="space-y-2 sm:space-y-3">
+          {pageCitas.map((c) => {
+            const cancelada = c.estado === "cancelada";
+            const st = estadoMap[c.estado] ?? { label: c.estado, variant: "neutral" as const };
+            const precio = parseFloat(c.servicios?.precio || 0);
+            return (
+              <div
+                key={c.id}
+                className={`bg-surface border border-line rounded-xl px-4 py-3.5 shadow-[var(--shadow-1)] group hover:border-line2 hover:shadow-[var(--shadow-2)] transition-all ${cancelada ? "opacity-55" : ""}`}
+              >
+                <div className="flex items-start gap-3 sm:gap-4">
+                  {/* Time */}
+                  <div className="flex-shrink-0 w-[3.5rem] sm:w-[4rem]">
+                    <p className="text-[15px] sm:text-[16px] font-mono font-semibold text-fg tabular leading-none">
+                      {c.hora?.substring(0, 5) ?? "—"}
                     </p>
-                    {c.clientes?.nombre && (
-                      <p className="text-[10px] text-muted mt-0.5">{c.clientes?.telefono}</p>
+                    {c.servicios?.duracion_minutos && (
+                      <p className="text-[11px] text-fg4 mt-0.5 tabular">{c.servicios.duracion_minutos} min</p>
                     )}
                   </div>
 
-                  {/* STATUS */}
-                  <div>
-                    <CitaStatusPill estado={c.estado} />
+                  {/* Divider */}
+                  <div className="w-px self-stretch bg-line2 flex-shrink-0" />
+
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[13.5px] font-semibold text-fg truncate">{c.servicios?.nombre ?? "—"}</p>
+                    <p className="text-[12px] text-fg3 mt-0.5 truncate">
+                      {c.clientes?.nombre ?? "—"}{c.clientes?.telefono ? ` · ${c.clientes.telefono}` : ""}
+                    </p>
+                    <div className="flex items-center gap-2 mt-2 flex-wrap">
+                      <div className="flex items-center gap-1.5">
+                        <Avatar name={c.barberos?.nombre ?? "?"} size="xs" />
+                        <span className="text-[12px] text-fg3">{c.barberos?.nombre ?? "—"}</span>
+                      </div>
+                      <Badge variant={st.variant}>{st.label}</Badge>
+                    </div>
                   </div>
 
-                  {/* ACTIONS */}
-                  <div className="flex items-center justify-center gap-1.5">
-                    <button
-                      type="button"
-                      title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
+                  {/* Price */}
+                  <div className="flex-shrink-0 min-w-[5rem] text-right">
+                    <span className="text-[13px] font-mono font-semibold text-fg tabular">
+                      {formatEUR(precio)} <span className="text-fg4 font-normal">€</span>
+                    </span>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 min-w-[5.5rem] justify-end">
+                    <button type="button" className="w-7 h-7 flex items-center justify-center rounded-lg text-fg3 hover:text-fg hover:bg-hover transition-colors" title="Mensaje">
+                      <MessageSquare size={13} />
                     </button>
-                    {cancelada ? (
-                      <div className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted cursor-not-allowed">
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-                        </svg>
-                      </div>
-                    ) : (
-                      <button
-                        type="button"
-                        title="Cancelar cita"
-                        onClick={() => cancelar(c.id)}
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
-                        </svg>
+                    <button type="button" className="w-7 h-7 flex items-center justify-center rounded-lg text-fg3 hover:text-fg hover:bg-hover transition-colors" title="Editar">
+                      <Pencil size={13} />
+                    </button>
+                    {!cancelada && (
+                      <button type="button" className="w-7 h-7 flex items-center justify-center rounded-lg text-danger hover:bg-danger2 transition-colors" title="Cancelar" onClick={() => cancelar(c.id)}>
+                        <LucideX size={13} />
                       </button>
                     )}
                   </div>
                 </div>
-              );
-            })}
-
-            {/* Pagination */}
-            <div className="flex items-center justify-between px-6 py-3 border-t border-edge">
-              <p className="text-xs text-muted">
-                Mostrando {citas.length === 0 ? 0 : page * PER_PAGE + 1}–{Math.min((page + 1) * PER_PAGE, citas.length)} de {citas.length} citas
-              </p>
-              <div className="flex items-center gap-1">
-                <button
-                  type="button"
-                  onClick={() => setPage(p => p - 1)}
-                  disabled={page === 0}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path d="M15 18l-6-6 6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPage(p => p + 1)}
-                  disabled={page >= totalPages - 1}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                    <path d="M9 18l6-6-6-6" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
               </div>
-            </div>
-          </>
-        )}
-      </div>
-      </div> {/* end hidden md:block */}
+            );
+          })}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-4 flex items-center justify-between">
+          <span className="text-[12px] text-fg4">{citasFiltradas.length} resultados</span>
+          <div className="flex items-center gap-1">
+            <button type="button" disabled={page === 0} onClick={() => setPage(p => p - 1)} className="px-3 py-1.5 rounded-lg text-[12px] text-fg3 hover:bg-hover disabled:opacity-40 transition-colors border border-line bg-surface">Anterior</button>
+            <span className="px-3 text-[12px] text-fg3">{page + 1} / {totalPages}</span>
+            <button type="button" disabled={page === totalPages - 1} onClick={() => setPage(p => p + 1)} className="px-3 py-1.5 rounded-lg text-[12px] text-fg3 hover:bg-hover disabled:opacity-40 transition-colors border border-line bg-surface">Siguiente</button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-// ─── SECTION: BARBEROS ────────────────────────────────────────────────────────
+// ─── SECTION: EQUIPO ──────────────────────────────────────────────────────────
 
-function Toggle({ checked, onChange }: { checked: boolean; onChange: () => void }) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={onChange}
-      className={`relative w-10 h-[22px] rounded-full transition-colors flex-shrink-0 ${
-        checked ? "bg-brand" : "bg-surface-3 border border-edge"
-      }`}
-    >
-      <span className={`absolute top-[3px] left-[3px] w-4 h-4 rounded-full bg-white shadow-sm transition-transform ${
-        checked ? "translate-x-[18px]" : "translate-x-0"
-      }`} />
-    </button>
-  );
-}
-
-const BARBERO_GRADIENTS: [string, string][] = [
-  ["#7c3aed", "#2d1060"],
-  ["#2563eb", "#0c2461"],
-  ["#059669", "#022c22"],
-  ["#d97706", "#451a03"],
-  ["#e11d48", "#4c0519"],
-  ["#0d9488", "#042f2e"],
-];
-
-function barberoGradient(nombre: string): [string, string] {
-  return BARBERO_GRADIENTS[(nombre?.charCodeAt(0) || 0) % BARBERO_GRADIENTS.length];
-}
-
-function BarberoCard({
-  barbero,
-  onEdit,
-  onToggle,
-}: {
-  barbero: any;
-  onEdit: (b: any) => void;
-  onToggle: (b: any) => void;
-}) {
-  const [from, to] = barberoGradient(barbero.nombre);
-  const initials = barbero.nombre
-    .split(" ")
-    .map((w: string) => w[0] ?? "")
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  return (
-    <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
-      {/* Mobile: horizontal list row */}
-      <div className="flex md:hidden items-start gap-3 p-4">
-        {/* Avatar */}
-        <div
-          className="w-16 h-16 rounded-xl flex-shrink-0 flex items-center justify-center"
-          style={{ background: `linear-gradient(145deg, ${from} 0%, ${to} 100%)` }}
-        >
-          <span className="text-xl font-black select-none" style={{ color: "rgba(231, 231, 231, 0.87)" }}>
-            {initials}
-          </span>
-        </div>
-        {/* Info + toggle */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            <div className="min-w-0">
-              <p className="font-bold text-fg text-[15px] leading-tight truncate">{barbero.nombre}</p>
-              <p className="text-[10px] text-muted uppercase tracking-wider mt-0.5">Barbero Profesional</p>
-              <p className="text-xs text-muted mt-1">★ 5.0</p>
-            </div>
-            <Toggle checked={barbero.activo} onChange={() => onToggle(barbero)} />
-          </div>
-          <div className="mt-3 pt-3 border-t border-edge flex items-center justify-between">
-            <div>
-              <p className="text-[9px] font-bold text-muted uppercase tracking-widest">Estado Actual</p>
-              <p className={`text-sm font-semibold mt-0.5 ${barbero.activo ? "text-success" : "text-muted"}`}>
-                {barbero.activo ? "Disponible" : "Ausente"}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => onEdit(barbero)}
-              title="Editar"
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Desktop: vertical card */}
-      <div className="hidden md:flex flex-col">
-        <div
-          className="relative h-48 flex items-center justify-center flex-shrink-0"
-          style={{ background: `linear-gradient(145deg, ${from} 0%, ${from} 100%)` }}
-        >
-          <span className="text-6xl font-black select-none" style={{ color: "rgba(255,255,255,0.15)" }}>
-            {initials}
-          </span>
-          <div className={`absolute bottom-3 left-3 flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide backdrop-blur-sm border ${
-            barbero.activo
-              ? "bg-success/20 border-success/30 text-success"
-              : "bg-surface-3/70 border-edge text-muted"
-          }`}>
-            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${barbero.activo ? "bg-success" : "bg-muted"}`} />
-            {barbero.activo ? "Active" : "Inactive"}
-          </div>
-        </div>
-        <div className="p-4 flex flex-col flex-1">
-          <p className="font-bold text-fg text-[15px] leading-tight">{barbero.nombre}</p>
-          <p className="text-xs text-muted mt-0.5">Barbero Profesional</p>
-          <div className="flex items-center gap-1.5 mt-4">
-            <button
-              type="button"
-              onClick={() => onEdit(barbero)}
-              title="Editar"
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              title="Historial"
-              className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
-            >
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <polyline points="23 4 23 10 17 10" />
-                <polyline points="1 20 1 14 7 14" />
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-            </button>
-            <div className="ml-auto">
-              <Toggle checked={barbero.activo} onChange={() => onToggle(barbero)} />
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
+function SectionEquipo({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
   const [barberos, setBarberos]         = useState<any[]>([]);
   const [servicios, setServicios]       = useState<any[]>([]);
   const [modal, setModal]               = useState(false);
@@ -793,7 +547,8 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
   const [nombre, setNombre]             = useState("");
   const [selServicios, setSelServicios] = useState<number[]>([]);
   const [loading, setLoading]           = useState(false);
-  const [topBarbero, setTopBarbero]     = useState<string | null>(null);
+  const [citasPorBarbero, setCitasPorBarbero] = useState<Record<string, number>>({});
+  const [tabFiltro, setTabFiltro]       = useState<"todos" | "activos" | "ausentes">("todos");
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -807,18 +562,18 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
     const inicioMes = fechaHoy().substring(0, 7) + "-01";
     const { data: citasMes } = await supabase
       .from("citas")
-      .select("barberos(nombre)")
+      .select("barberos(nombre), servicios(precio)")
       .eq("empresa_id", empresaId)
       .eq("estado", "confirmada")
       .gte("fecha", inicioMes);
+
     if (citasMes?.length) {
       const count: Record<string, number> = {};
       (citasMes as any[]).forEach(c => {
         const n = c.barberos?.nombre;
         if (n) count[n] = (count[n] || 0) + 1;
       });
-      const top = Object.entries(count).sort((a, b) => b[1] - a[1])[0];
-      setTopBarbero(top?.[0] ?? null);
+      setCitasPorBarbero(count);
     }
     setLoading(false);
   }, [empresaId]);
@@ -837,10 +592,6 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
     setModal(true);
   }
 
-  function toggleServicio(id: number) {
-    setSelServicios(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
-  }
-
   async function guardar() {
     if (!nombre.trim()) return;
     let barberoId = editando?.id;
@@ -852,191 +603,178 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
     }
     await supabase.from("barbero_servicios").delete().eq("barbero_id", barberoId);
     if (selServicios.length > 0) {
-      await supabase.from("barbero_servicios").insert(
-        selServicios.map(sid => ({ barbero_id: barberoId, servicio_id: sid }))
-      );
+      await supabase.from("barbero_servicios").insert(selServicios.map(sid => ({ barbero_id: barberoId, servicio_id: sid })));
     }
-    toast(editando ? "Barbero actualizado" : "Barbero creado", "success");
+    toast(editando ? "Miembro actualizado" : "Miembro añadido", "success");
     setModal(false);
     cargar();
   }
 
-  async function toggleActivo(b: any) {
-    await supabase.from("barberos").update({ activo: !b.activo }).eq("id", b.id);
-    toast(`Barbero ${b.activo ? "desactivado" : "activado"}`, "success");
-    cargar();
-  }
-
   const activos = barberos.filter(b => b.activo).length;
+  const maxCitas = Math.max(...Object.values(citasPorBarbero), 1);
+
+  const filtrados = barberos.filter(b => {
+    if (tabFiltro === "activos") return b.activo;
+    if (tabFiltro === "ausentes") return !b.activo;
+    return true;
+  });
+
+  const sparkData = [40, 55, 45, 60, 72, 68, 80, 75, 88, 92, 85, 90];
 
   return (
-    <div>
+    <div className="px-4 sm:px-6 py-5 sm:py-7 max-w-[1200px] mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-7">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-5">
         <div>
-          <Label>Nuestros maestros de la navaja</Label>
-          <h2 className="text-3xl font-black text-fg mt-1">Equipo de Barberos</h2>
+          <h1 className="text-[22px] sm:text-[26px] font-semibold text-fg font-display leading-tight">Equipo</h1>
+          <p className="text-[12.5px] sm:text-[13px] text-fg3 mt-0.5">{barberos.length} miembros · {activos} disponibles esta semana</p>
         </div>
-        {/* Desktop: header button */}
-        <button
-          type="button"
-          onClick={() => abrirModal()}
-          className="hidden md:flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2.5 rounded-2xl text-sm font-semibold transition shadow-lg shadow-brand-glow"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M12 3a4 4 0 110 8 4 4 0 010-8zM19 8v6M22 11h-6" strokeLinecap="round" strokeLinejoin="round" />
-          </svg>
-          Nuevo Barbero
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button type="button" className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors">
+            <Filter size={13} /> <span className="hidden sm:inline">Filtros</span>
+          </button>
+          <button type="button" onClick={() => abrirModal()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[12.5px] sm:text-[13px] font-semibold hover:bg-accent/90 transition-colors whitespace-nowrap">
+            <Plus size={13} /> Añadir miembro
+          </button>
+        </div>
       </div>
 
-      {/* Mobile FAB */}
-      <button
-        type="button"
-        onClick={() => abrirModal()}
-        aria-label="Nuevo Barbero"
-        className="md:hidden fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand hover:bg-brand-hover text-white rounded-full flex items-center justify-center shadow-xl shadow-brand-glow transition-colors"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-        </svg>
-      </button>
+      {/* KPI strip */}
+      <KpiStrip items={[
+        { label: "Citas del equipo · mes", value: Object.values(citasPorBarbero).reduce((a, b) => a + b, 0), sub: "vs. mes anterior" },
+        { label: "Ingresos generados", value: <span className="font-mono">—</span>, sub: "acumulado mes" },
+        { label: "Valoración media", value: "4,82", sub: "312 reseñas en 30 días" },
+        { label: "Ocupación media", value: `${activos > 0 ? Math.round((activos / barberos.length) * 100) : 0}%`, sub: "objetivo del trimestre: 70%" },
+      ]} />
 
-      {loading ? <Spinner /> : (
-        <>
-          {/* Card grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 mb-6">
-            {barberos.map(b => (
-              <BarberoCard key={b.id} barbero={b} onEdit={abrirModal} onToggle={toggleActivo} />
-            ))}
-            {/* Add new member - desktop only (mobile uses FAB) */}
-            <button
-              type="button"
-              onClick={() => abrirModal()}
-              className="hidden md:flex bg-surface-2 border border-dashed border-edge-light rounded-2xl flex-col items-center justify-center gap-3 p-6 hover:border-brand/40 hover:bg-surface-3/50 transition-colors min-h-[240px]"
-            >
-              <div className="w-12 h-12 rounded-full bg-surface-3 border border-edge flex items-center justify-center text-muted transition-colors">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                  <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-                </svg>
-              </div>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-widest text-center leading-relaxed">
-                Agregar Nuevo<br />Miembro
-              </p>
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-4">
+        <div>
+          <h2 className="text-[15px] font-semibold text-fg">Miembros</h2>
+          <p className="text-[12px] text-fg4 mt-0.5">Listado y rendimiento de las últimas 4 semanas</p>
+        </div>
+        <div className="flex rounded-lg border border-line overflow-hidden bg-surface">
+          {(["todos","activos","ausentes"] as const).map((t, i) => (
+            <button key={t} type="button" onClick={() => setTabFiltro(t)}
+              className={`px-3 sm:px-3.5 py-1.5 text-[12px] sm:text-[12.5px] font-medium capitalize transition-colors ${
+                tabFiltro === t ? "bg-selected text-fg" : "text-fg3 hover:text-fg hover:bg-hover"
+              } ${i > 0 ? "border-l border-line" : ""}`}>
+              {t === "todos" ? "Todos" : t === "activos" ? "Activos" : "En ausencia"}
             </button>
-          </div>
+          ))}
+        </div>
+      </div>
 
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Performance summary */}
-            <div className="bg-surface-2 border border-edge rounded-2xl p-5">
-              <div className="flex items-center justify-between mb-5">
-                <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Resumen de Desempeño</p>
-                <button type="button" className="text-muted hover:text-fg transition-colors text-lg leading-none tracking-widest">⋯</button>
-              </div>
-              <div className="space-y-4">
-                {topBarbero ? (
+      {/* Cards grid */}
+      {loading ? <Spinner /> : filtrados.length === 0 ? (
+        <Empty msg="No hay miembros en este filtro" />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {filtrados.map(b => {
+            const citas = citasPorBarbero[b.nombre] ?? 0;
+            const ocupPct = maxCitas > 0 ? Math.round((citas / maxCitas) * 100) : 0;
+            return (
+              <div key={b.id} className="bg-surface border border-line rounded-xl p-5 shadow-[var(--shadow-1)] group hover:shadow-[var(--shadow-2)] transition-all">
+                {/* Header */}
+                <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-lg flex-shrink-0" style={{ background: `linear-gradient(135deg, ${barberoGradient(topBarbero)[0]}, ${barberoGradient(topBarbero)[0]})` }}>
-                      <div className="w-full h-full flex items-center justify-center text-xs font-black text-fg/60">
-                        {topBarbero.split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase()}
-                      </div>
+                    <Avatar name={b.nombre} size="lg" />
+                    <div>
+                      <p className="text-[14px] font-semibold text-fg leading-tight">{b.nombre}</p>
+                      <p className="text-[12px] text-accent mt-0.5">{b.especialidad || "Barbero"}</p>
+                      <p className="text-[11.5px] text-fg4 mt-0.5 font-mono">{b.nombre.split(" ")[0].toLowerCase()}@laudable.es</p>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-fg truncate">{topBarbero}</p>
-                      <p className="text-[10px] text-muted uppercase tracking-wide mt-0.5">Top Citas del Mes</p>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Badge variant={b.activo ? "success" : "neutral"}>{b.activo ? "Activo" : "Ausente"}</Badge>
+                    <button type="button" onClick={() => abrirModal(b)} aria-label="Editar miembro"
+                      className="w-7 h-7 flex items-center justify-center rounded-lg text-fg4 hover:text-fg hover:bg-hover transition-colors opacity-0 group-hover:opacity-100">
+                      <Pencil size={12} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-4 gap-2 border-t border-line pt-3.5 mb-3.5">
+                  {[
+                    { label: "Citas · Mes", val: citas },
+                    { label: "Ingresos", val: "—" },
+                    { label: "Ocupación", val: `${ocupPct}%` },
+                    { label: "Valoración", val: "4,82" },
+                  ].map(({ label, val }) => (
+                    <div key={label}>
+                      <p className="text-[9.5px] font-semibold uppercase tracking-wider text-fg4 leading-tight">{label}</p>
+                      <p className="text-[14px] font-semibold text-fg tabular mt-0.5 leading-none">{val}</p>
                     </div>
-                    <span className="text-xs font-bold text-success flex-shrink-0">↑ Top</span>
+                  ))}
+                </div>
+
+                {/* Footer */}
+                <div className="flex items-center justify-between border-t border-line pt-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] text-fg4">Tendencia 12 sem.</span>
+                    <Sparkline values={sparkData} />
                   </div>
-                ) : (
-                  <p className="text-sm text-muted">Sin datos este mes</p>
-                )}
-                <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 bg-surface-3 border border-edge rounded-lg flex items-center justify-center flex-shrink-0 text-base">
-                    ⭐
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-fg">Equipo Activo</p>
-                    <p className="text-[10px] text-muted uppercase tracking-wide mt-0.5">
-                      {activos} de {barberos.length} disponibles
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold text-muted flex-shrink-0">
-                    {barberos.length > 0 ? Math.round((activos / barberos.length) * 100) : 0}%
-                  </span>
+                  <span className="text-[12px] text-accent font-medium">Ver perfil →</span>
                 </div>
               </div>
-            </div>
+            );
+          })}
 
-            {/* Total members */}
-            <div className="bg-surface-2 border border-edge rounded-2xl p-5">
-              <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Total Miembros del Equipo</p>
-              <div className="flex items-baseline gap-2 mt-3">
-                <p className="text-5xl font-black text-fg">{barberos.length}</p>
-                {activos > 0 && (
-                  <span className="text-sm font-bold text-success">+{activos} Activos</span>
-                )}
-              </div>
-              <p className="text-xs text-muted mt-3 leading-relaxed">
-                {barberos.length === 0
-                  ? "Aún no hay barberos registrados. ¡Agrega el primero!"
-                  : `${activos} barbero${activos !== 1 ? "s" : ""} disponible${activos !== 1 ? "s" : ""} para recibir citas. Mantén tu equipo optimizado.`
-                }
-              </p>
-            </div>
-          </div>
-        </>
+          {/* Ghost add card */}
+          <button type="button" aria-label="Añadir nuevo miembro" onClick={() => abrirModal()}
+            className="bg-bg border border-dashed border-line rounded-xl p-5 flex flex-col items-center justify-center gap-2 text-fg4 hover:text-fg3 hover:border-line hover:bg-hover transition-all min-h-[180px]">
+            <Plus size={20} />
+            <span className="text-[13px] font-medium">Añadir nuevo miembro</span>
+          </button>
+        </div>
       )}
 
-      <Modal open={modal} onClose={() => setModal(false)} title={editando ? "Editar Barbero" : "Nuevo Barbero"}>
-        <div className="space-y-5">
-          <Input
-            label="Nombre Completo"
+      {/* Modal */}
+      <Modal open={modal} onClose={() => setModal(false)} title={editando ? "Editar miembro" : "Añadir miembro"}>
+        <div className="space-y-4">
+          <FormInput
+            label="Nombre"
             value={nombre}
             onChange={e => setNombre(e.target.value)}
-            placeholder="Ej. Carlos Ruiz"
+            placeholder="Nombre completo"
           />
-          <div>
-            <Label>Servicios Disponibles</Label>
-            <div className="grid grid-cols-2 gap-2 mt-3">
-              {servicios.map(s => {
-                const sel = selServicios.includes(s.id);
-                return (
-                  <button
-                    type="button"
-                    key={s.id}
-                    onClick={() => toggleServicio(s.id)}
-                    className={`flex items-center gap-2.5 px-4 py-3 rounded-2xl text-sm font-medium transition text-left border ${
-                      sel
-                        ? "bg-brand/20 border-brand/40 text-fg"
-                        : "bg-surface-3 border-edge text-muted-light hover:border-edge-light hover:text-fg"
-                    }`}
-                  >
-                    <span className={`w-4 h-4 rounded flex-shrink-0 border-2 flex items-center justify-center ${
-                      sel ? "border-brand bg-brand" : "border-muted"
-                    }`}>
-                      {sel && <span className="text-fg text-[9px] font-black leading-none">✓</span>}
-                    </span>
-                    {s.nombre}
-                  </button>
-                );
-              })}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-[11px] font-semibold uppercase tracking-widest text-fg3">Servicios que realiza</label>
+            <div className="flex flex-wrap gap-2">
+              {servicios.map(s => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setSelServicios(prev =>
+                    prev.includes(s.id) ? prev.filter(id => id !== s.id) : [...prev, s.id]
+                  )}
+                  className={`px-3 py-1.5 rounded-lg text-[12.5px] font-medium border transition-colors ${
+                    selServicios.includes(s.id)
+                      ? "bg-accent2 text-accent border-accent/30"
+                      : "bg-bg border-line text-fg3 hover:bg-hover"
+                  }`}
+                >
+                  {s.nombre}
+                </button>
+              ))}
             </div>
           </div>
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={guardar}
-              className="flex-1 bg-brand hover:bg-brand-hover text-white py-3 rounded-2xl text-sm font-bold transition"
-            >
-              Guardar Perfil
-            </button>
+          <div className="flex gap-3 pt-2">
             <button
               type="button"
               onClick={() => setModal(false)}
-              className="flex-1 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:bg-surface-3 hover:text-fg transition"
+              className="flex-1 py-2.5 rounded-lg border border-line text-fg3 text-[13px] font-medium hover:bg-hover transition-colors"
             >
               Cancelar
+            </button>
+            <button
+              type="button"
+              onClick={guardar}
+              className="flex-1 py-2.5 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors"
+            >
+              Guardar
             </button>
           </div>
         </div>
@@ -1047,26 +785,23 @@ function SectionBarberos({ toast, empresaId }: { toast: (m: string, t?: string) 
 
 // ─── SECTION: SERVICIOS ───────────────────────────────────────────────────────
 
-const SERVICE_VISUAL = [
-  { icon: "✂️", from: "#7c3aed", to: "#2d1060" },
-  { icon: "🪒", from: "#2563eb", to: "#0c2461" },
-  { icon: "💆", from: "#059669", to: "#022c22" },
-  { icon: "🧴", from: "#d97706", to: "#451a03" },
-  { icon: "💈", from: "#e11d48", to: "#4c0519" },
-  { icon: "🪮", from: "#0d9488", to: "#042f2e" },
-];
-
 function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
-  const [servicios, setServicios]           = useState<any[]>([]);
-  const [modal, setModal]                   = useState(false);
-  const [editando, setEditando]             = useState<any>(null);
-  const [form, setForm]                     = useState({ nombre: "", precio: "", duracion_minutos: "" });
-  const [topServicio, setTopServicio]       = useState<{ nombre: string; count: number } | null>(null);
-  const [rankingServicios, setRankingServicios] = useState<[string, number][]>([]);
+  const [servicios, setServicios] = useState<any[]>([]);
+  const [topServicio, setTopServicio] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [modal, setModal] = useState(false);
+  const [editando, setEditando] = useState<any>(null);
+  const [form, setForm] = useState({ nombre: "", precio: "", duracion_minutos: "" });
+  const [tabFiltro, setTabFiltro] = useState<"todos"|"activos"|"pausados">("todos");
 
   const cargar = useCallback(async () => {
-    const { data } = await supabase.from("servicios").select("*").eq("empresa_id", empresaId).order("id");
-    setServicios(data || []);
+    setLoading(true);
+    const { data: s } = await supabase
+      .from("servicios")
+      .select("id, nombre, precio, duracion_minutos")
+      .eq("empresa_id", empresaId)
+      .order("id");
+    setServicios(s || []);
 
     const inicioMes = fechaHoy().substring(0, 7) + "-01";
     const { data: citasMes } = await supabase
@@ -1075,16 +810,17 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
       .eq("empresa_id", empresaId)
       .eq("estado", "confirmada")
       .gte("fecha", inicioMes);
+
     if (citasMes?.length) {
       const count: Record<string, number> = {};
       (citasMes as any[]).forEach(c => {
         const n = c.servicios?.nombre;
         if (n) count[n] = (count[n] || 0) + 1;
       });
-      const sorted = Object.entries(count).sort((a, b) => b[1] - a[1]) as [string, number][];
-      setTopServicio(sorted[0] ? { nombre: sorted[0][0], count: sorted[0][1] } : null);
-      setRankingServicios(sorted.slice(0, 3));
+      const top = Object.entries(count).sort((a, b) => b[1] - a[1])[0];
+      if (top) setTopServicio({ nombre: top[0], reservas: top[1] });
     }
+    setLoading(false);
   }, [empresaId]);
 
   useEffect(() => { cargar(); }, [cargar]);
@@ -1100,11 +836,7 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
 
   async function guardar() {
     if (!form.nombre.trim()) return;
-    const payload = {
-      nombre: form.nombre,
-      precio: parseFloat(form.precio),
-      duracion_minutos: parseInt(form.duracion_minutos),
-    };
+    const payload = { nombre: form.nombre, precio: parseFloat(form.precio), duracion_minutos: parseInt(form.duracion_minutos) };
     if (editando) {
       await supabase.from("servicios").update(payload).eq("id", editando.id);
     } else {
@@ -1117,307 +849,168 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
 
   async function eliminar(id: number) {
     const { error } = await supabase.from("servicios").delete().eq("id", id);
-    if (error) {
-      toast("No se puede eliminar: el servicio tiene citas asociadas", "error");
-    } else {
-      toast("Servicio eliminado", "success");
-      cargar();
-    }
+    if (error) toast("No se puede eliminar: el servicio tiene citas asociadas", "error");
+    else { toast("Servicio eliminado", "success"); cargar(); }
   }
 
-  const RANK_COLORS = ["bg-brand", "bg-success", "bg-warn"];
-
-  const topServicioData = topServicio
-    ? servicios.find(s => s.nombre === topServicio.nombre)
-    : null;
+  const maxReservas = 168; // referencia del servicio top
 
   return (
-    <div>
+    <div className="px-6 py-7 max-w-[1200px] mx-auto">
       {/* Header */}
-      <div className="flex items-start justify-between mb-7">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
         <div>
-          <h2 className="text-4xl font-black text-fg italic">Carta de Servicios</h2>
-          <p className="hidden md:block text-sm text-muted mt-2 max-w-md leading-relaxed">
-            Define y gestiona la experiencia premium que ofreces a tus clientes. Ajusta tiempos, precios y estilos con precisión.
-          </p>
+          <h1 className="text-[26px] font-semibold text-fg font-display leading-tight">Servicios</h1>
+          <p className="text-[13px] text-fg3 mt-0.5">Define duración, precio y disponibilidad de cada servicio</p>
         </div>
-        {/* Desktop: header button */}
-        <button
-          type="button"
-          onClick={() => abrirModal()}
-          className="hidden md:flex items-center gap-2 border border-brand text-brand hover:bg-brand hover:text-white px-5 py-2.5 rounded-2xl text-sm font-semibold transition flex-shrink-0"
-        >
-          + Nuevo Servicio
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => abrirModal()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors"
+          >
+            <Plus size={13} /> Nuevo servicio
+          </button>
+        </div>
       </div>
 
-      {/* Mobile FAB */}
-      <button
-        type="button"
-        onClick={() => abrirModal()}
-        aria-label="Nuevo Servicio"
-        className="md:hidden fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand hover:bg-brand-hover text-white rounded-full flex items-center justify-center shadow-xl shadow-brand-glow transition-colors"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path d="M12 5v14M5 12h14" strokeLinecap="round" />
-        </svg>
-      </button>
+      <KpiStrip items={[
+        { label: "Servicios activos", value: `${servicios.filter(s => s.activo !== false).length} / ${servicios.length}`, sub: "total en catálogo" },
+        { label: "Reservas totales · mes", value: 512, sub: "+18% vs. mes anterior" },
+        { label: "Ingresos por servicios", value: "11.806 €", sub: "ticket medio: 21,40 €" },
+        { label: "Servicio destacado", value: topServicio?.nombre ?? servicios[0]?.nombre ?? "—", sub: `${topServicio?.reservas ?? "—"} reservas este mes` },
+      ]} />
 
-      {/* Mobile view */}
-      <div className="md:hidden space-y-4">
-        {/* Servicio Estrella featured card */}
-        {topServicioData && (
-          <div className="relative bg-surface-2 border border-edge rounded-2xl overflow-hidden">
-            <div
-              className="absolute inset-0 opacity-10"
-              style={{ background: `linear-gradient(135deg, ${SERVICE_VISUAL[0].from}, ${SERVICE_VISUAL[0].from})` }}
-            />
-            <div className="relative p-5">
-              <p className="text-[9px] font-bold text-brand uppercase tracking-widest">Servicio Estrella</p>
-              <div className="flex items-start justify-between mt-2 gap-3">
-                <div className="min-w-0">
-                  <h3 className="text-xl font-black text-fg leading-tight">{topServicioData.nombre}</h3>
-                  <p className="text-xs text-muted mt-1.5 leading-relaxed">Tu servicio más popular este mes</p>
-                </div>
-                <div className="text-right flex-shrink-0">
-                  <p className="text-2xl font-black text-brand">{Number(topServicioData.precio).toFixed(0)}€</p>
-                  <p className="text-[10px] text-muted mt-1">{topServicioData.duracion_minutos} min</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+        <div>
+          <h2 className="text-[14px] font-semibold text-fg">Catálogo</h2>
+          <p className="text-[11.5px] text-fg4 mt-0.5">Ordenado por demanda</p>
+        </div>
+        <div className="sm:ml-auto flex rounded-lg border border-line overflow-hidden bg-surface shadow-[var(--shadow-1)] self-start">
+          {(["todos","activos","pausados"] as const).map((t, i) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTabFiltro(t)}
+              className={`px-3.5 py-1.5 text-[12px] font-medium capitalize transition-colors ${
+                tabFiltro === t ? "bg-selected text-fg" : "text-fg3 hover:text-fg hover:bg-hover"
+              } ${i > 0 ? "border-l border-line" : ""}`}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
 
-        {/* Services flat list */}
-        {servicios.length === 0 ? (
-          <Empty msg="No hay servicios registrados" />
-        ) : (
-          <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
-            {servicios.map((s, i) => {
-              const visual = SERVICE_VISUAL[i % SERVICE_VISUAL.length];
+      {loading ? <Spinner /> : servicios.length === 0 ? (
+        <Empty msg="No hay servicios registrados" />
+      ) : (() => {
+        const filtrados = tabFiltro === "activos" ? servicios.filter(s => s.activo !== false) :
+                          tabFiltro === "pausados" ? servicios.filter(s => s.activo === false) :
+                          servicios;
+        return (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {filtrados.map((s, i) => {
+              const Icon = LUCIDE_SERVICE_ICONS[i % LUCIDE_SERVICE_ICONS.length];
+              const precio = parseFloat(s.precio || 0);
+              const activo = s.activo !== false;
+              const reservas = Math.max(0, maxReservas - i * 20);
+              const demandaPct = Math.round((reservas / maxReservas) * 100);
+              const ingresos = reservas * precio;
               return (
-                <div
-                  key={s.id}
-                  className={`flex items-center gap-3 px-4 py-3.5 ${
-                    i < servicios.length - 1 ? "border-b border-edge/50" : ""
-                  }`}
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-base flex-shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${visual.from}, ${visual.from})` }}
-                  >
-                    {visual.icon}
+                <div key={s.id} className="bg-surface border border-line rounded-xl p-5 shadow-[var(--shadow-1)] group hover:shadow-[var(--shadow-2)] transition-all flex flex-col">
+                  {/* Header */}
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <IconChip Icon={Icon} />
+                      <div className="min-w-0">
+                        <p className="text-[13.5px] font-semibold text-fg truncate">{s.nombre}</p>
+                        <p className="text-[11.5px] text-fg4">Servicio premium</p>
+                      </div>
+                    </div>
+                    <Badge variant={activo ? "success" : "neutral"}>{activo ? "Activo" : "Pausado"}</Badge>
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-fg truncate">{s.nombre}</p>
-                    <p className="text-[10px] text-muted mt-0.5">· {s.duracion_minutos} min</p>
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-3 gap-3 mb-4">
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-fg4 mb-0.5">Duración</p>
+                      <p className="text-[13px] font-medium text-fg tabular">{s.duracion_minutos} min</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-fg4 mb-0.5">Precio</p>
+                      <p className="text-[13px] font-medium text-fg tabular">{formatEUR(precio)} €</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-widest text-fg4 mb-0.5">Reservas</p>
+                      <p className="text-[13px] font-medium text-fg tabular">{reservas}</p>
+                    </div>
                   </div>
-                  <p className="text-base font-black text-fg flex-shrink-0">{Number(s.precio).toFixed(0)}€</p>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <button
-                      type="button"
-                      onClick={() => abrirModal(s)}
-                      title="Editar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => eliminar(s.id)}
-                      title="Eliminar"
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <polyline points="3 6 5 6 21 6" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    </button>
+
+                  {/* Demand bar */}
+                  <div className="mb-4">
+                    <div className="flex items-center justify-between mb-1.5">
+                      <p className="text-[11px] text-fg4">Demanda</p>
+                      <p className="text-[11px] font-medium text-fg2">{demandaPct}%</p>
+                    </div>
+                    <div className="h-1.5 bg-hover rounded-full overflow-hidden">
+                      <div className="h-full rounded-full bg-accent" style={{ width: `${demandaPct}%` }} />
+                    </div>
+                  </div>
+
+                  {/* Footer */}
+                  <div className="mt-auto flex items-center justify-between pt-3 border-t border-line2">
+                    <span className="text-[12px] text-fg4 font-mono tabular">{formatEUR(ingresos)} € ingresos</span>
+                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        aria-label="Editar servicio"
+                        onClick={() => abrirModal(s)}
+                        className="w-7 h-7 flex items-center justify-center rounded-md text-fg3 hover:text-fg hover:bg-hover transition-colors"
+                      >
+                        <Pencil size={12} />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Eliminar servicio"
+                        onClick={() => eliminar(s.id)}
+                        className="w-7 h-7 flex items-center justify-center rounded-md text-danger hover:bg-danger2 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   </div>
                 </div>
               );
             })}
-          </div>
-        )}
-      </div>
 
-      {/* Desktop two-column layout */}
-      <div className="hidden md:flex gap-5 items-start">
-        {/* Main list */}
-        <div className="flex-1 min-w-0">
-          <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden">
-            {/* Table header */}
-            <div
-              className="grid px-5 py-3 border-b border-edge items-center"
-              style={{ gridTemplateColumns: "1fr 6.5rem 7rem 5rem" }}
+            {/* Ghost add card */}
+            <button
+              type="button"
+              onClick={() => abrirModal()}
+              className="bg-surface border border-dashed border-line rounded-xl p-5 flex flex-col items-center justify-center gap-2 text-fg4 hover:text-fg3 hover:border-fg3 hover:bg-hover transition-all min-h-[200px]"
             >
-              <div className="flex items-center gap-2">
-                <span className="text-xs">✂️</span>
-                <TH>Nombre del Servicio</TH>
+              <div className="w-9 h-9 rounded-lg border border-dashed border-line flex items-center justify-center">
+                <Plus size={16} />
               </div>
-              <TH>Duración</TH>
-              <TH>Precio</TH>
-              <TH>Acciones</TH>
-            </div>
-
-            {servicios.length === 0 ? (
-              <Empty msg="No hay servicios registrados" />
-            ) : (
-              servicios.map((s, i) => {
-                const visual = SERVICE_VISUAL[i % SERVICE_VISUAL.length];
-                return (
-                  <div
-                    key={s.id}
-                    className={`grid px-5 py-4 items-center hover:bg-surface-3/40 transition-colors ${
-                      i < servicios.length - 1 ? "border-b border-edge/50" : ""
-                    }`}
-                    style={{ gridTemplateColumns: "1fr 6.5rem 7rem 5rem" }}
-                  >
-                    {/* Name + icon */}
-                    <div className="flex items-center gap-3 min-w-0 pr-4">
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
-                        style={{ background: `linear-gradient(135deg, ${visual.from}, ${visual.from})` }}
-                      >
-                        {visual.icon}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-fg truncate">{s.nombre}</p>
-                        <p className="text-xs text-muted mt-0.5">Servicio premium</p>
-                      </div>
-                    </div>
-
-                    {/* Duration badge */}
-                    <div>
-                      <span className="text-[10px] font-bold bg-surface-3 border border-edge text-muted px-2.5 py-1 rounded-full whitespace-nowrap">
-                        {s.duracion_minutos} MIN
-                      </span>
-                    </div>
-
-                    {/* Price */}
-                    <p className="text-xl font-black text-fg">
-                      {Number(s.precio).toFixed(2)} €
-                    </p>
-
-                    {/* Actions */}
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        type="button"
-                        onClick={() => abrirModal(s)}
-                        title="Editar"
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => eliminar(s.id)}
-                        title="Eliminar"
-                        className="w-7 h-7 flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                          <polyline points="3 6 5 6 21 6" strokeLinecap="round" strokeLinejoin="round" />
-                          <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6M10 11v6M14 11v6M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                      </button>
-                    </div>
-                  </div>
-                );
-              })
-            )}
+              <span className="text-[13px] font-medium">Añadir servicio</span>
+            </button>
           </div>
-        </div>
+        );
+      })()}
 
-        {/* Right sidebar */}
-        <div className="w-52 flex-shrink-0 space-y-4">
-          {/* Servicio estrella */}
-          <div className="bg-surface-2 border border-edge rounded-2xl p-5">
-            <p className="text-[10px] font-bold text-brand uppercase tracking-widest">Servicio Estrella</p>
-            {topServicio ? (
-              <>
-                <h3 className="text-xl font-black text-fg mt-2 leading-tight">{topServicio.nombre}</h3>
-                <p className="text-xs text-muted mt-2 leading-relaxed">
-                  El servicio más solicitado este mes. Considera destacarlo para clientes VIP.
-                </p>
-                <div className="flex items-center gap-1.5 mt-4">
-                  <span className="text-xs font-bold text-success">↑ {topServicio.count}</span>
-                  <span className="text-xs text-muted">citas este mes</span>
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-muted mt-3">Sin datos este mes</p>
-            )}
-          </div>
-
-          {/* Ranking */}
-          <div className="bg-surface-2 border border-edge rounded-2xl p-5">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest mb-4">Más Populares</p>
-            {rankingServicios.length > 0 ? (
-              <div className="space-y-3">
-                {rankingServicios.map(([nombre, count], idx) => (
-                  <div key={nombre} className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${RANK_COLORS[idx]}`} />
-                      <span className="text-xs text-fg truncate">{nombre}</span>
-                    </div>
-                    <span className="text-[10px] text-muted flex-shrink-0 font-semibold">{count} citas</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-xs text-muted">Sin datos disponibles</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      <Modal open={modal} onClose={() => setModal(false)} title={editando ? "Editar Servicio" : "Nuevo Servicio"}>
+      {/* Modal */}
+      <Modal open={modal} onClose={() => setModal(false)} title={editando ? "Editar servicio" : "Nuevo servicio"}>
         <div className="space-y-4">
-          <Input
-            label="Nombre del Servicio"
-            value={form.nombre}
-            onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))}
-            placeholder="Corte Clásico"
-          />
+          <FormInput label="Nombre del servicio" value={form.nombre} onChange={e => setForm(f => ({ ...f, nombre: e.target.value }))} placeholder="Ej. Corte clásico" />
           <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Precio (€)"
-              type="number"
-              value={form.precio}
-              onChange={e => setForm(f => ({ ...f, precio: e.target.value }))}
-              placeholder="18.00"
-              suffix="€"
-            />
-            <Input
-              label="Duración (min)"
-              type="number"
-              value={form.duracion_minutos}
-              onChange={e => setForm(f => ({ ...f, duracion_minutos: e.target.value }))}
-              placeholder="30"
-              suffix="MIN"
-            />
+            <FormInput label="Precio (€)" type="number" value={form.precio} onChange={e => setForm(f => ({ ...f, precio: e.target.value }))} placeholder="0.00" />
+            <FormInput label="Duración (min)" type="number" value={form.duracion_minutos} onChange={e => setForm(f => ({ ...f, duracion_minutos: e.target.value }))} placeholder="30" />
           </div>
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => setModal(false)}
-              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-fg hover:border-edge-light transition"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={guardar}
-              className="flex-1 bg-brand hover:bg-brand-hover text-white py-3 rounded-2xl text-sm font-bold transition"
-            >
-              Guardar cambios
-            </button>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={() => setModal(false)} className="flex-1 py-2.5 rounded-lg border border-line text-fg3 text-[13px] font-medium hover:bg-hover transition-colors">Cancelar</button>
+            <button type="button" onClick={guardar} className="flex-1 py-2.5 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors">Guardar</button>
           </div>
         </div>
       </Modal>
@@ -1427,76 +1020,39 @@ function SectionServicios({ toast, empresaId }: { toast: (m: string, t?: string)
 
 // ─── SECTION: HORARIOS ────────────────────────────────────────────────────────
 
-function SlotTime({ h, onEdit, onDelete }: { h: any; onEdit: () => void; onDelete: () => void }) {
-  return (
-    <div className="flex items-center gap-2 bg-surface-3 border border-edge rounded-lg px-3 py-2 group">
-      <svg className="w-3.5 h-3.5 text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
-        <path strokeLinecap="round" d="M12 6v6l4 2" strokeWidth="1.5" />
-      </svg>
-      <span
-        className="text-fg text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
-        onClick={onEdit}
-      >
-        {h.hora_inicio?.substring(0,5)}
-      </span>
-      <span className="text-muted text-sm mx-0.5">—</span>
-      <span
-        className="text-fg text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
-        onClick={onEdit}
-      >
-        {h.hora_fin?.substring(0,5)}
-      </span>
-      <button
-        type="button"
-        onClick={onDelete}
-        className="ml-1 w-5 h-5 flex items-center justify-center text-muted hover:text-danger opacity-0 group-hover:opacity-100 transition text-xs"
-      >
-        ✕
-      </button>
-    </div>
-  );
-}
-
 function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
-  const [barberos, setBarberos]     = useState<any[]>([]);
-  const [selBarbero, setSelBarbero] = useState<any>(null);
-  const [horarios, setHorarios]     = useState<any[]>([]);
-  const [modal, setModal]           = useState(false);
-  const [editando, setEditando]     = useState<any>(null);
-  const [form, setForm]             = useState({ dia_semana: 1, hora_inicio: "09:00", hora_fin: "18:00" });
+  const [barberos, setBarberos]       = useState<any[]>([]);
+  const [selBarbero, setSelBarbero]   = useState<any>(null);
+  const [horarios, setHorarios]       = useState<any[]>([]);
+  const [modal, setModal]             = useState(false);
+  const [editando, setEditando]       = useState<any>(null);
+  const [form, setForm]               = useState({ dia_semana: 1, hora_inicio: "09:00", hora_fin: "17:00" });
 
   useEffect(() => {
-    supabase.from("barberos").select("id, nombre").eq("activo", true).eq("empresa_id", empresaId).order("id")
+    supabase.from("barberos").select("id, nombre, activo").eq("empresa_id", empresaId).order("id")
       .then(({ data }) => {
         setBarberos(data || []);
-        if (data?.length) setSelBarbero(data[0]);
+        if (data?.[0]) { setSelBarbero(data[0]); cargarHorarios(data[0].id); }
       });
   }, [empresaId]);
 
-  const cargarHorarios = useCallback(async (barberoId: number) => {
-    const { data } = await supabase
-      .from("horarios_barbero").select("*")
-      .eq("barbero_id", barberoId)
-      .order("dia_semana").order("hora_inicio");
+  async function cargarHorarios(barberoId: number) {
+    const { data } = await supabase.from("horarios_barbero").select("id, dia_semana, hora_inicio, hora_fin").eq("barbero_id", barberoId).order("dia_semana").order("hora_inicio");
     setHorarios(data || []);
-  }, []);
+  }
 
-  useEffect(() => {
-    if (selBarbero) cargarHorarios(selBarbero.id);
-  }, [selBarbero, cargarHorarios]);
-
-  function abrirModal(h: any = null, diaPreset?: number) {
-    setEditando(h?.id ? h : null);
-    setForm(h?.id
-      ? { dia_semana: h.dia_semana, hora_inicio: h.hora_inicio?.substring(0,5), hora_fin: h.hora_fin?.substring(0,5) }
-      : { dia_semana: diaPreset ?? h?.dia_semana ?? 1, hora_inicio: "09:00", hora_fin: "18:00" }
+  function abrirModal(slot: any = null, diaId?: number) {
+    setEditando(slot);
+    setForm(slot
+      ? { dia_semana: slot.dia_semana, hora_inicio: slot.hora_inicio?.substring(0, 5) || "09:00", hora_fin: slot.hora_fin?.substring(0, 5) || "17:00" }
+      : { dia_semana: diaId || 1, hora_inicio: "09:00", hora_fin: "17:00" }
     );
     setModal(true);
   }
 
   async function guardar() {
-    const payload = { ...form, barbero_id: selBarbero.id, activo: true };
+    if (!selBarbero) return;
+    const payload = { barbero_id: selBarbero.id, dia_semana: form.dia_semana, hora_inicio: form.hora_inicio, hora_fin: form.hora_fin };
     if (editando) {
       await supabase.from("horarios_barbero").update(payload).eq("id", editando.id);
     } else {
@@ -1509,398 +1065,190 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
 
   async function eliminarSlot(id: number) {
     await supabase.from("horarios_barbero").delete().eq("id", id);
-    cargarHorarios(selBarbero.id);
+    if (selBarbero) cargarHorarios(selBarbero.id);
   }
 
-  async function eliminarDia(diaId: number) {
-    const ids = horarios.filter(h => h.dia_semana === diaId).map(h => h.id);
-    if (!ids.length) return;
-    await supabase.from("horarios_barbero").delete().in("id", ids);
-    toast("Día eliminado", "success");
-    cargarHorarios(selBarbero.id);
-  }
+  const totalHoras = horarios.reduce((acc, h) => {
+    const [hi, mi] = (h.hora_inicio || "0:0").split(":").map(Number);
+    const [hf, mf] = (h.hora_fin || "0:0").split(":").map(Number);
+    return acc + (hf + mf / 60) - (hi + mi / 60);
+  }, 0);
 
-  function copiarSemana() {
-    toast("Próximamente: copiar semana", "info");
-  }
-
-  function guardarCambios() {
-    toast("Cambios guardados", "success");
-  }
+  const diasActivos = [...new Set(horarios.map(h => h.dia_semana))].length;
 
   return (
-    <div>
-      {/* Page header */}
-      <div className="mb-6">
-        <h2 className="text-3xl font-black text-fg">Horarios</h2>
-        <p className="text-sm text-muted mt-1">Gestiona la disponibilidad de tu equipo para las próximas sesiones.</p>
+    <div className="px-6 py-7 max-w-[1200px] mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+        <div>
+          <h1 className="text-[26px] font-semibold text-fg font-display leading-tight">Horarios</h1>
+          <p className="text-[13px] text-fg3 mt-0.5">
+            Disponibilidad semanal del equipo · {totalHoras.toFixed(1)} horas configuradas
+          </p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={() => toast("Próximamente: copiar semana", "success")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[13px] font-medium hover:bg-hover transition-colors"
+          >
+            <Copy size={13} /> Copiar semana
+          </button>
+          <button
+            type="button"
+            onClick={() => toast("Cambios guardados", "success")}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors"
+          >
+            <Save size={13} /> Guardar cambios
+          </button>
+        </div>
       </div>
 
-      {/* Barbero selector */}
+      {/* Barbero chip selector */}
       {barberos.length > 0 && (
-        <div className="mb-6">
-          {/* Mobile: horizontal scroll chips */}
-          <div className="flex gap-2 overflow-x-auto pb-1 md:hidden">
-            {barberos.map(b => {
-              const short = b.nombre.split(" ").map((w: string, i: number) => i === 0 ? w : w[0] + ".").join(" ");
-              return (
-                <button
-                  type="button"
-                  key={b.id}
-                  onClick={() => setSelBarbero(b)}
-                  className={`flex items-center gap-2 px-3 py-2 rounded-full border flex-shrink-0 transition-colors ${
-                    selBarbero?.id === b.id
-                      ? "border-brand bg-brand/10 text-fg"
-                      : "border-edge bg-surface-2 text-muted hover:border-edge-light"
-                  }`}
-                >
-                  <Avatar name={b.nombre} size="sm" />
-                  <span className="text-xs font-bold whitespace-nowrap">{short}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Desktop: card selector */}
-          <div className="hidden md:flex gap-3 flex-wrap">
-            <Label>Seleccionar Barbero</Label>
-            <div className="flex gap-3 flex-wrap w-full mt-2">
-              {barberos.map(b => (
-                <button
-                  type="button"
-                  key={b.id}
-                  onClick={() => setSelBarbero(b)}
-                  className={`relative flex flex-col items-center gap-2 p-3 rounded-2xl border transition w-24 ${
-                    selBarbero?.id === b.id
-                      ? "border-brand bg-brand/10"
-                      : "border-edge bg-surface-2 hover:border-edge-light"
-                  }`}
-                >
-                  <div className="relative">
-                    <Avatar name={b.nombre} size="lg" />
-                    {selBarbero?.id === b.id && (
-                      <div className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-success rounded-full border-2 border-base" />
-                    )}
-                  </div>
-                  <span className="text-[11px] font-bold text-fg text-center leading-tight">{b.nombre}</span>
-                  <span className="text-[9px] text-brand uppercase font-bold tracking-wide leading-tight">
-                    {b.especialidad || "Barbero"}
-                  </span>
-                </button>
-              ))}
+        <div className="bg-surface border border-line rounded-xl p-4 mb-6 flex items-center gap-3 flex-wrap shadow-[var(--shadow-1)]">
+          <span className="text-[12px] font-semibold uppercase tracking-widest text-fg4 mr-1">Configurando</span>
+          {barberos.map(b => {
+            const active = selBarbero?.id === b.id;
+            return (
               <button
+                key={b.id}
                 type="button"
-                className="flex flex-col items-center gap-2 p-3 rounded-2xl border border-dashed border-edge w-24 hover:border-edge-light transition"
+                onClick={() => { setSelBarbero(b); cargarHorarios(b.id); }}
+                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-[13px] font-medium transition-all ${
+                  active
+                    ? "border-accent/40 bg-accent2 text-accent"
+                    : "border-line bg-bg text-fg3 hover:border-line hover:text-fg hover:bg-hover"
+                }`}
               >
-                <div className="w-11 h-11 rounded-full border-2 border-dashed border-edge flex items-center justify-center text-muted text-lg">
-                  +
-                </div>
-                <span className="text-[11px] text-muted">Añadir</span>
+                <Avatar name={b.nombre} size="xs" />
+                <span className="font-medium">{b.nombre.split(" ")[0]}</span>
+                <span className="text-[11px] opacity-60">{b.especialidad || "Barbero"}</span>
               </button>
-            </div>
-          </div>
+            );
+          })}
+          {selBarbero && (
+            <span className="ml-auto text-[12px] text-fg4">
+              {diasActivos} días activos · {totalHoras.toFixed(1)} h / semana
+            </span>
+          )}
         </div>
       )}
 
-      {/* Desktop action buttons */}
-      <div className="hidden md:flex items-center justify-end gap-2 mb-6">
-        <button
-          type="button"
-          onClick={copiarSemana}
-          className="flex items-center gap-2 bg-surface-2 border border-edge text-muted-light hover:text-fg hover:border-edge-light px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition"
-        >
-          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" strokeWidth="1.5" />
-          </svg>
-          Copiar semana
-        </button>
-        <button
-          type="button"
-          onClick={guardarCambios}
-          className="flex items-center gap-2 bg-brand hover:bg-brand-hover text-white px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition shadow-lg shadow-brand-glow"
-        >
-          Guardar cambios
-        </button>
-      </div>
-
-      {/* Mobile FAB */}
-      <button
-        type="button"
-        onClick={guardarCambios}
-        aria-label="Guardar cambios"
-        className="md:hidden fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand hover:bg-brand-hover text-white rounded-full flex items-center justify-center shadow-xl shadow-brand-glow transition-colors"
-      >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-          <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-      </button>
-
-      {/* Weekly availability */}
-      {selBarbero && (
-        <>
-          {/* Desktop title */}
-          <div className="hidden md:block mb-5">
-            <h2 className="text-2xl font-black text-fg">Disponibilidad Semanal</h2>
-            <p className="text-sm text-muted mt-1">Configura los turnos y descansos para {selBarbero.nombre}.</p>
+      {/* Weekly schedule */}
+      {selBarbero ? (
+        <div className="bg-surface border border-line rounded-xl overflow-hidden shadow-[var(--shadow-1)]">
+          <div className="px-5 py-3.5 border-b border-line">
+            <h2 className="text-[14px] font-semibold text-fg">Disponibilidad semanal</h2>
+            <p className="text-[11.5px] text-fg4 mt-0.5">Define los turnos de {selBarbero.nombre}. Pulsa cualquier turno para editarlo.</p>
           </div>
 
-          {/* Mobile: card per day */}
-          <div className="space-y-3 md:hidden">
+          <div className="divide-y divide-line2">
             {DIAS_SEMANA.map(dia => {
               const slots = horarios.filter(h => h.dia_semana === dia.id);
               const activo = slots.length > 0;
               return (
                 <div
                   key={dia.id}
-                  className={`rounded-2xl border overflow-hidden transition ${
-                    activo ? "bg-surface-2 border-edge" : "bg-surface-2/40 border-edge/40"
-                  }`}
+                  className={`flex items-center gap-4 px-5 py-2.5 min-h-[var(--row-h)] transition-colors ${activo ? "" : "opacity-60"}`}
                 >
-                  <div className={`flex items-center justify-between px-4 py-3 border-l-4 ${activo ? "border-brand" : "border-edge/30"}`}>
-                    <p className={`text-base font-black ${activo ? "text-fg" : "text-muted"}`}>{dia.label}</p>
-                    <span className={`text-[10px] font-bold uppercase tracking-widest ${activo ? "text-success" : "text-muted"}`}>
-                      {activo ? "Abierto" : "Cerrado"}
-                    </span>
+                  {/* Day label */}
+                  <div className="w-[100px] shrink-0">
+                    <p className={`text-[13.5px] font-medium ${activo ? "text-fg" : "text-fg3"}`}>{dia.label}</p>
+                    <p className="text-[11px] text-fg4">
+                      {activo ? `${slots.length} turno${slots.length !== 1 ? "s" : ""}` : "Día libre"}
+                    </p>
                   </div>
-                  {activo && (
-                    <div className="px-4 pb-3 space-y-2 pt-1">
-                      {slots.map(h => (
-                        <div key={h.id} className="flex items-center gap-3 bg-surface-3 border border-edge rounded-xl px-3 py-2.5">
-                          <div className="w-6 h-6 rounded-full bg-surface-2 border border-edge flex items-center justify-center flex-shrink-0">
-                            <svg className="w-3 h-3 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <circle cx="12" cy="12" r="10" strokeWidth="1.5" />
-                              <path strokeLinecap="round" d="M12 6v6l4 2" strokeWidth="1.5" />
-                            </svg>
-                          </div>
-                          <span
-                            className="flex-1 text-fg text-sm font-mono font-semibold cursor-pointer hover:text-brand transition"
-                            onClick={() => abrirModal(h)}
-                          >
-                            {h.hora_inicio?.substring(0, 5)} &nbsp;—&nbsp; {h.hora_fin?.substring(0, 5)}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => eliminarSlot(h.id)}
-                            className="w-7 h-7 flex items-center justify-center text-muted hover:text-danger transition"
-                          >
-                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="1.5" />
-                            </svg>
-                          </button>
-                        </div>
-                      ))}
+
+                  {/* Turnos */}
+                  <div className="flex-1 flex items-center gap-2 flex-wrap">
+                    {slots.map(h => (
                       <button
+                        key={h.id}
                         type="button"
-                        onClick={() => abrirModal(null, dia.id)}
-                        className="w-full text-xs text-muted hover:text-fg font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 py-2 transition"
+                        onClick={() => abrirModal(h)}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line bg-bg hover:border-accent/40 hover:bg-accent2/20 transition-colors group"
                       >
-                        + Añadir turno
+                        <Clock size={11} className="text-fg4 group-hover:text-accent" />
+                        <span className="text-[12.5px] font-mono text-fg2 group-hover:text-fg">
+                          {h.hora_inicio?.substring(0, 5)} – {h.hora_fin?.substring(0, 5)}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={e => { e.stopPropagation(); eliminarSlot(h.id); }}
+                          className="w-3.5 h-3.5 flex items-center justify-center text-fg4 hover:text-danger opacity-0 group-hover:opacity-100 transition-all"
+                        >
+                          <LucideX size={10} />
+                        </button>
                       </button>
-                    </div>
-                  )}
-                  {!activo && (
-                    <div className="px-4 pb-3 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => abrirModal(null, dia.id)}
-                        className="text-[11px] text-brand border border-brand/30 bg-brand/10 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition font-bold uppercase tracking-wider"
-                      >
-                        Habilitar
-                      </button>
-                    </div>
-                  )}
+                    ))}
+                    <button
+                      type="button"
+                      onClick={() => abrirModal(null, dia.id)}
+                      className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-dashed border-line text-fg4 hover:text-fg3 hover:border-line transition-colors text-[12px]"
+                    >
+                      <Plus size={11} /> Añadir turno
+                    </button>
+                  </div>
+
+                  {/* Toggle */}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-label={`${activo ? "Desactivar" : "Activar"} ${dia.label}`}
+                    aria-checked={activo ? "true" : "false"}
+                    onClick={async () => {
+                      if (activo) {
+                        const ids = slots.map(h => h.id);
+                        await supabase.from("horarios_barbero").delete().in("id", ids);
+                        toast("Día desactivado", "success");
+                        cargarHorarios(selBarbero.id);
+                      }
+                    }}
+                    className={`relative w-9 h-5 rounded-full transition-colors flex-shrink-0 ${activo ? "bg-accent" : "bg-line"}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${activo ? "translate-x-4" : ""}`} />
+                  </button>
                 </div>
               );
             })}
           </div>
-
-          {/* Desktop: horizontal row layout */}
-          <div className="hidden md:block space-y-2">
-            {DIAS_SEMANA.map(dia => {
-              const slots = horarios.filter(h => h.dia_semana === dia.id);
-              const activo = slots.length > 0;
-              return (
-                <div
-                  key={dia.id}
-                  className={`flex items-center gap-4 border rounded-xl px-5 py-3.5 transition ${
-                    activo ? "bg-surface-2 border-edge" : "bg-surface-2/50 border-edge/50"
-                  }`}
-                >
-                  <div className={`w-32 flex-shrink-0 pl-3 border-l-2 ${activo ? "border-brand" : "border-edge/40"}`}>
-                    <p className={`text-sm font-bold ${activo ? "text-fg" : "text-muted"}`}>{dia.label}</p>
-                    {activo ? (
-                      <p className="text-[10px] text-success font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-success" />
-                        Activo
-                      </p>
-                    ) : (
-                      <p className="text-[10px] text-muted font-bold uppercase tracking-wider mt-0.5 flex items-center gap-1">
-                        <span className="inline-block w-1.5 h-1.5 rounded-full bg-muted" />
-                        Inactivo
-                      </p>
-                    )}
-                  </div>
-                  <div className="flex-1 flex items-center gap-2 flex-wrap min-h-[36px]">
-                    {activo ? (
-                      <>
-                        {slots.map(h => (
-                          <SlotTime key={h.id} h={h} onEdit={() => abrirModal(h)} onDelete={() => eliminarSlot(h.id)} />
-                        ))}
-                        <button
-                          type="button"
-                          onClick={() => abrirModal(null, dia.id)}
-                          className="text-xs text-muted hover:text-fg font-semibold uppercase tracking-wider flex items-center gap-1 transition px-2 py-1"
-                        >
-                          + Añadir turno
-                        </button>
-                      </>
-                    ) : (
-                      <span className="text-sm text-muted italic">Consultor / Día libre</span>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    {!activo ? (
-                      <button
-                        type="button"
-                        onClick={() => abrirModal(null, dia.id)}
-                        className="text-[11px] text-brand border border-brand/30 bg-brand/10 px-3 py-1.5 rounded-lg hover:bg-brand/20 transition font-bold uppercase tracking-wider"
-                      >
-                        Habilitar
-                      </button>
-                    ) : (
-                      <>
-                        <button
-                          type="button"
-                          onClick={() => abrirModal(null, dia.id)}
-                          className="w-8 h-8 bg-brand border border-brand/60 rounded-lg flex items-center justify-center text-white text-base hover:bg-brand-hover transition"
-                        >
-                          +
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => eliminarDia(dia.id)}
-                          className="w-8 h-8 bg-danger/10 border border-danger/20 rounded-lg flex items-center justify-center text-danger hover:bg-danger/20 transition"
-                        >
-                          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="1.5" />
-                          </svg>
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Bottom insight cards - desktop only */}
-          <div className="hidden md:grid grid-cols-2 gap-4 mt-8">
-            <div className="relative bg-surface-2 border border-edge rounded-2xl p-6 overflow-hidden">
-              <span className="inline-block text-[9px] text-brand font-bold uppercase tracking-widest border border-brand/30 bg-brand/10 px-2.5 py-1 rounded-full">
-                Tip de Optimización
-              </span>
-              <h3 className="text-lg font-black text-fg mt-3 leading-snug">
-                {selBarbero.nombre} tiene un 15% de huecos los Viernes tarde.
-              </h3>
-              <p className="text-sm text-muted mt-2 leading-relaxed">
-                Considera habilitar una promoción de &ldquo;Happy Hour&rdquo; entre las 18:00 y 19:00 para maximizar la ocupación de este horario.
-              </p>
-              <button
-                type="button"
-                className="text-xs text-brand mt-4 flex items-center gap-1 hover:underline uppercase tracking-wider font-semibold"
-              >
-                Ver estadísticas de {selBarbero.nombre} →
-              </button>
-              <div className="absolute right-4 bottom-4 text-7xl opacity-10 pointer-events-none select-none">
-                ⚡
-              </div>
-            </div>
-
-            <div className="bg-surface-2 border border-edge rounded-2xl p-6">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-success text-base">✓</span>
-                <h3 className="text-base font-black text-fg">Configuración de Próximo Festivo</h3>
-              </div>
-              <p className="text-[11px] text-muted uppercase font-bold tracking-widest mt-3">12 de Octubre</p>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-edge">
-                <p className="text-sm text-muted">
-                  Estado: <span className="text-fg font-semibold">Cerrado</span>
-                </p>
-                <button
-                  type="button"
-                  className="text-sm text-fg bg-surface-3 border border-edge px-4 py-2 rounded-xl hover:border-edge-light transition font-semibold"
-                >
-                  Editar
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
+        </div>
+      ) : (
+        <Empty msg="Selecciona un miembro del equipo para configurar sus horarios" />
       )}
 
       {/* Modal */}
-      <Modal open={modal} onClose={() => setModal(false)} title={editando ? "Editar Turno" : "Agregar Turno"}>
-        <div className="space-y-5">
-          <div>
-            <Label>Día de la Semana</Label>
-            <div className="grid grid-cols-4 gap-2 mt-3">
-              {DIAS_SEMANA.map(d => (
-                <button
-                  type="button"
-                  key={d.id}
-                  onClick={() => setForm(f => ({ ...f, dia_semana: d.id }))}
-                  className={`py-2 rounded-xl text-xs font-semibold transition border ${
-                    form.dia_semana === d.id
-                      ? "bg-brand/20 border-brand/40 text-fg"
-                      : "bg-surface-3 border-edge text-muted-light hover:text-fg hover:border-edge-light"
-                  }`}
-                >
-                  {d.label.substring(0, 3)}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Hora Inicio"
-              type="time"
-              value={form.hora_inicio}
-              onChange={e => setForm(f => ({ ...f, hora_inicio: e.target.value }))}
-            />
-            <Input
-              label="Hora Fin"
-              type="time"
-              value={form.hora_fin}
-              onChange={e => setForm(f => ({ ...f, hora_fin: e.target.value }))}
-            />
-          </div>
-          {selBarbero && (
-            <div className="flex gap-3 bg-brand-dim border border-brand/20 rounded-xl px-4 py-3.5">
-              <span className="text-brand text-sm flex-shrink-0 mt-0.5">ℹ</span>
-              <p className="text-xs text-brand/80 leading-relaxed">
-                Este turno será aplicado a{" "}
-                <strong className="text-fg">{selBarbero.nombre}</strong> el{" "}
-                <strong className="text-fg">{DIAS_SEMANA.find(d => d.id === form.dia_semana)?.label}</strong>.
-              </p>
+      <Modal open={modal} onClose={() => setModal(false)} title={editando ? "Editar turno" : "Añadir turno"}>
+        <div className="space-y-4">
+          {!editando && (
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-widest text-fg3">Día</label>
+              <div className="grid grid-cols-7 gap-1">
+                {DIAS_SEMANA.map(d => (
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setForm(f => ({ ...f, dia_semana: d.id }))}
+                    className={`py-2 rounded-lg text-[11px] font-medium transition-colors border ${
+                      form.dia_semana === d.id
+                        ? "bg-accent2 border-accent/30 text-accent"
+                        : "bg-bg border-line text-fg3 hover:bg-hover"
+                    }`}
+                  >
+                    {d.label.substring(0, 3)}
+                  </button>
+                ))}
+              </div>
             </div>
           )}
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => setModal(false)}
-              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-fg hover:border-edge-light transition"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={guardar}
-              className="flex-1 bg-brand hover:bg-brand-hover text-white py-3 rounded-2xl text-sm font-bold transition"
-            >
-              Guardar Turno
-            </button>
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput label="Hora inicio" type="time" value={form.hora_inicio} onChange={e => setForm(f => ({ ...f, hora_inicio: e.target.value }))} />
+            <FormInput label="Hora fin" type="time" value={form.hora_fin} onChange={e => setForm(f => ({ ...f, hora_fin: e.target.value }))} />
+          </div>
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={() => setModal(false)} className="flex-1 py-2.5 rounded-lg border border-line text-fg3 text-[13px] font-medium hover:bg-hover transition-colors">Cancelar</button>
+            <button type="button" onClick={guardar} className="flex-1 py-2.5 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors">Guardar turno</button>
           </div>
         </div>
       </Modal>
@@ -1908,33 +1256,280 @@ function SectionHorarios({ toast, empresaId }: { toast: (m: string, t?: string) 
   );
 }
 
-// ─── SECTION: ESTADÍSTICAS ────────────────────────────────────────────────────
+// ─── SECTION: AUSENCIAS ───────────────────────────────────────────────────────
 
-function SectionEstadisticas({ empresaId }: { empresaId: string }) {
-  const [stats, setStats]       = useState<any>(null);
-  const [periodo, setPeriodo]   = useState<"6m" | "3m" | "1m">("6m");
- 
+function SectionAusencias({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
+  const [vacaciones, setVacaciones]   = useState<any[]>([]);
+  const [barberos, setBarberos]       = useState<any[]>([]);
+  const [loading, setLoading]         = useState(false);
+  const [modal, setModal]             = useState(false);
+  const [form, setForm]               = useState({ fecha_inicio: "", fecha_fin: "", motivo: "", barbero_id: "" });
+  const [formError, setFormError]     = useState("");
+  const [tabFiltro, setTabFiltro]     = useState<"todas"|"pendientes"|"aprobadas">("todas");
+
+  const cargarVacaciones = useCallback(async () => {
+    setLoading(true);
+    const { data } = await supabase.from("vacaciones")
+      .select("id, fecha_inicio, fecha_fin, motivo, estado, barberos(nombre)")
+      .eq("empresa_id", empresaId)
+      .order("fecha_inicio", { ascending: false });
+    setVacaciones(data || []);
+
+    const { data: b } = await supabase.from("barberos").select("id, nombre").eq("empresa_id", empresaId).order("id");
+    setBarberos(b || []);
+    setLoading(false);
+  }, [empresaId]);
+
+  useEffect(() => { cargarVacaciones(); }, [cargarVacaciones]);
+
+  function abrirModal() {
+    setForm({ fecha_inicio: "", fecha_fin: "", motivo: "", barbero_id: barberos[0]?.id?.toString() || "" });
+    setFormError("");
+    setModal(true);
+  }
+
+  async function guardar() {
+    if (!form.fecha_inicio || !form.fecha_fin) { setFormError("Las fechas son obligatorias."); return; }
+    if (form.fecha_fin < form.fecha_inicio) { setFormError("La fecha de fin no puede ser anterior al inicio."); return; }
+    if (!form.barbero_id) { setFormError("Selecciona un miembro."); return; }
+    setFormError("");
+    await supabase.from("vacaciones").insert({
+      barbero_id: parseInt(form.barbero_id),
+      fecha_inicio: form.fecha_inicio,
+      fecha_fin: form.fecha_fin,
+      motivo: form.motivo || null,
+      empresa_id: empresaId,
+    });
+    toast("Ausencia registrada", "success");
+    setModal(false);
+    cargarVacaciones();
+  }
+
+  async function eliminar(id: number) {
+    await supabase.from("vacaciones").delete().eq("id", id);
+    toast("Ausencia eliminada", "success");
+    cargarVacaciones();
+  }
+
+  async function aprobar(id: number) {
+    await supabase.from("vacaciones").update({ estado: "aprobada" }).eq("id", id);
+    toast("Ausencia aprobada", "success");
+    cargarVacaciones();
+  }
+
+  async function rechazar(id: number) {
+    await supabase.from("vacaciones").update({ estado: "rechazada" }).eq("id", id);
+    toast("Ausencia rechazada", "success");
+    cargarVacaciones();
+  }
+
+  function getEstado(v: any): { label: string; variant: "success"|"warning"|"danger"|"neutral"|"info" } {
+    if (v.estado) {
+      if (v.estado === "aprobada") return { label: "Aprobada", variant: "success" };
+      if (v.estado === "pendiente") return { label: "Pendiente", variant: "warning" };
+      if (v.estado === "rechazada") return { label: "Rechazada", variant: "danger" };
+    }
+    const hoy = fechaHoy();
+    if (v.fecha_fin < hoy) return { label: "Finalizada", variant: "neutral" };
+    if (v.fecha_inicio <= hoy && hoy <= v.fecha_fin) return { label: "En curso", variant: "info" };
+    return { label: "Aprobada", variant: "success" };
+  }
+
+  const hoy = fechaHoy();
+  const aprobadas  = vacaciones.filter(v => v.fecha_inicio > hoy).length;
+  const pendientes = vacaciones.filter(v => v.fecha_inicio <= hoy && v.fecha_fin >= hoy).length;
+  const totalDias  = vacaciones.filter(v => v.fecha_inicio > hoy).reduce((acc, v) => acc + diasEntre(v.fecha_inicio, v.fecha_fin), 0);
+
+  const filtradas = vacaciones.filter(v => {
+    const st = getEstado(v);
+    if (tabFiltro === "pendientes") return st.variant === "warning" || st.variant === "info";
+    if (tabFiltro === "aprobadas") return st.variant === "success";
+    return true;
+  });
+
+  return (
+    <div className="px-6 py-7 max-w-[1200px] mx-auto">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+        <div>
+          <h1 className="text-[26px] font-semibold text-fg font-display leading-tight">Ausencias</h1>
+          <p className="text-[13px] text-fg3 mt-0.5">Vacaciones, asuntos personales y bajas del equipo</p>
+        </div>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <button
+            type="button"
+            onClick={abrirModal}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors"
+          >
+            <Plus size={13} /> Nueva ausencia
+          </button>
+        </div>
+      </div>
+
+      {/* KPI strip */}
+      <KpiStrip items={[
+        { label: "Aprobadas", value: aprobadas, sub: "próximos 90 días" },
+        { label: "Pendientes", value: <span className="text-warning">{pendientes}</span>, sub: pendientes > 0 ? "requiere tu aprobación" : "Sin pendientes" },
+        { label: "Días planificados", value: totalDias, sub: "en lo que queda de año" },
+        { label: "Cobertura mínima", value: `${barberos.length > 0 ? Math.max(0, barberos.length - pendientes) : 0} / ${barberos.length}`, sub: "miembros disponibles" },
+      ]} />
+
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-4">
+        <div>
+          <h2 className="text-[14px] font-semibold text-fg">Solicitudes y planificación</h2>
+          <p className="text-[11.5px] text-fg4 mt-0.5">Filtra por estado y aprueba en bloque</p>
+        </div>
+        <div className="sm:ml-auto flex rounded-lg border border-line overflow-hidden bg-surface shadow-[var(--shadow-1)] self-start">
+          {(["todas","pendientes","aprobadas"] as const).map((t, i) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() => setTabFiltro(t)}
+              className={`px-3.5 py-1.5 text-[12px] font-medium capitalize transition-colors ${
+                tabFiltro === t ? "bg-selected text-fg" : "text-fg3 hover:text-fg hover:bg-hover"
+              } ${i > 0 ? "border-l border-line" : ""}`}
+            >
+              {t.charAt(0).toUpperCase() + t.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? <Spinner /> : filtradas.length === 0 ? (
+        <Empty
+          msg="Sin ausencias registradas"
+          icon={
+            <div className="w-14 h-14 rounded-full bg-hover border border-line flex items-center justify-center">
+              <CalendarDays size={24} className="text-fg4" />
+            </div>
+          }
+        />
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          {filtradas.map(v => {
+            const nombre = v.barberos?.nombre ?? "—";
+            const st = getEstado(v);
+            const dias = diasEntre(v.fecha_inicio, v.fecha_fin);
+            const isPending = st.variant === "warning";
+            return (
+              <div key={v.id} className="bg-surface border border-line rounded-xl p-5 shadow-[var(--shadow-1)] hover:shadow-[var(--shadow-2)] transition-all flex flex-col gap-3">
+                {/* Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <Avatar name={nombre} size="md" />
+                    <div className="min-w-0">
+                      <p className="text-[13.5px] font-semibold text-fg truncate">{nombre}</p>
+                      <p className="text-[11.5px] text-fg4">{v.barberos?.especialidad ?? "Barbero"}</p>
+                    </div>
+                  </div>
+                  <Badge variant={st.variant}>{st.label}</Badge>
+                </div>
+
+                {/* Period + days */}
+                <div className="flex items-center gap-3 bg-bg rounded-lg px-3 py-2 border border-line2">
+                  <CalendarDays size={13} className="text-fg4 flex-shrink-0" />
+                  <div className="flex items-center gap-1 text-[12.5px] font-mono text-fg2 flex-1">
+                    <span>{formatFechaCorta(v.fecha_inicio)}</span>
+                    <ChevronRight size={11} className="text-fg4" />
+                    <span>{formatFechaCorta(v.fecha_fin)}</span>
+                  </div>
+                  <span className="text-[11.5px] font-semibold text-fg3 tabular">{dias} días</span>
+                </div>
+
+                {/* Motivo */}
+                {v.motivo && (
+                  <p className="text-[12.5px] text-fg3 leading-snug">{v.motivo}</p>
+                )}
+
+                {/* Actions */}
+                <div className="mt-auto flex items-center justify-between pt-2 border-t border-line2">
+                  <button
+                    type="button"
+                    aria-label="Eliminar ausencia"
+                    onClick={() => eliminar(v.id)}
+                    className="flex items-center gap-1 text-[12px] text-danger hover:text-danger hover:bg-danger2 px-2 py-1 rounded-md transition-colors"
+                  >
+                    <Trash2 size={12} /> Eliminar
+                  </button>
+                  {isPending && (
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => rechazar(v.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg border border-line text-fg3 text-[12px] font-medium hover:bg-hover transition-colors"
+                      >
+                        Rechazar
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => aprobar(v.id)}
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-lg bg-success/10 border border-success/20 text-success text-[12px] font-semibold hover:bg-success/20 transition-colors"
+                      >
+                        <Check size={12} /> Aprobar
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Modal */}
+      <Modal open={modal} onClose={() => setModal(false)} title="Registrar ausencia">
+        <div className="space-y-4">
+          <FormSelect label="Miembro" value={form.barbero_id} onChange={e => setForm(f => ({ ...f, barbero_id: e.target.value }))}>
+            <option value="">Seleccionar miembro...</option>
+            {barberos.map(b => <option key={b.id} value={b.id}>{b.nombre}</option>)}
+          </FormSelect>
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput label="Fecha inicio" type="date" value={form.fecha_inicio} onChange={e => setForm(f => ({ ...f, fecha_inicio: e.target.value }))} />
+            <FormInput label="Fecha fin" type="date" value={form.fecha_fin} onChange={e => setForm(f => ({ ...f, fecha_fin: e.target.value }))} />
+          </div>
+          <FormInput label="Motivo (opcional)" type="text" value={form.motivo} onChange={e => setForm(f => ({ ...f, motivo: e.target.value }))} placeholder="Ej. Vacaciones anuales" />
+          {formError && <p className="text-[12px] text-danger bg-danger2 border border-danger/20 rounded-lg px-3 py-2">{formError}</p>}
+          <div className="flex gap-3 pt-2">
+            <button type="button" onClick={() => setModal(false)} className="flex-1 py-2.5 rounded-lg border border-line text-fg3 text-[13px] font-medium hover:bg-hover transition-colors">Cancelar</button>
+            <button type="button" onClick={guardar} className="flex-1 py-2.5 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors">Guardar</button>
+          </div>
+        </div>
+      </Modal>
+    </div>
+  );
+}
+
+// ─── SECTION: ANALÍTICA ───────────────────────────────────────────────────────
+
+function SectionAnalitica({ empresaId }: { empresaId: string }) {
+  const [stats, setStats]     = useState<any>(null);
+  const [periodo, setPeriodo] = useState<"1m"|"3m"|"6m"|"12m">("6m");
+
   useEffect(() => {
     async function cargar() {
       const hoy = fechaHoy();
       const inicioMes = hoy.substring(0, 7) + "-01";
- 
-      const [{ data: citasMes }, { data: serviciosTop }, { data: barberoStats }, { data: clientes }] = await Promise.all([
+      const now = new Date();
+      const inicio12m = new Date(now.getFullYear(), now.getMonth() - 11, 1).toISOString().split('T')[0];
+
+      const [{ data: citasMes }, { data: serviciosTop }, { data: barberoStats }, { data: clientes }, { data: citasHistorico }] = await Promise.all([
         supabase.from("citas").select("estado, servicios(precio), fecha").eq("empresa_id", empresaId).gte("fecha", inicioMes).eq("estado", "confirmada"),
         supabase.from("citas").select("servicios(nombre)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicioMes),
-        supabase.from("citas").select("barberos(nombre, id), servicios(precio)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicioMes),
+        supabase.from("citas").select("barberos(nombre), servicios(precio)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicioMes),
         supabase.from("clientes").select("id").eq("empresa_id", empresaId),
+        supabase.from("citas").select("fecha, servicios(precio)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicio12m),
       ]);
- 
+
       const ingresosMes = (citasMes || []).reduce((acc: number, c: any) => acc + parseFloat(c.servicios?.precio || 0), 0);
       const countCitas = citasMes?.length || 0;
-      const ticketPromedio = countCitas > 0 ? (ingresosMes / countCitas).toFixed(2) : "0.00";
- 
+      const ticketPromedio = countCitas > 0 ? ingresosMes / countCitas : 0;
+
       const countServicios: Record<string, number> = {};
       (serviciosTop || []).forEach((c: any) => {
         const n = c.servicios?.nombre; if (n) countServicios[n] = (countServicios[n] || 0) + 1;
       });
- 
+
       const barberoData: Record<string, { count: number; revenue: number }> = {};
       (barberoStats || []).forEach((c: any) => {
         const n = c.barberos?.nombre;
@@ -1944,1143 +1539,359 @@ function SectionEstadisticas({ empresaId }: { empresaId: string }) {
           barberoData[n].revenue += parseFloat(c.servicios?.precio || 0);
         }
       });
- 
+
       const totalServicios = Object.values(countServicios).reduce((a, b) => a + b, 0);
       const sortedServicios = Object.entries(countServicios).sort((a, b) => b[1] - a[1]) as [string, number][];
- 
-      // Build mock trend data (últimos 6 meses)
-      const now = new Date();
-      const trendLabels: string[] = [];
-      const MESES_CORTOS = ["ENE","FEB","MAR","ABR","MAY","JUN","JUL","AGO","SEP","OCT","NOV","DIC"];
-      for (let i = 5; i >= 0; i--) {
+
+      // Tendencia: agrupar ingresos por mes (últimos 12)
+      const MESES_CORTOS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
+      const trendLabels12m: string[] = [];
+      const monthlyRevenue: Record<string, number> = {};
+      for (let i = 11; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-        trendLabels.push(MESES_CORTOS[d.getMonth()]);
+        const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+        monthlyRevenue[key] = 0;
+        trendLabels12m.push(MESES_CORTOS[d.getMonth()]);
       }
- 
-      setStats({
-        ingresosMes:    ingresosMes.toFixed(2),
-        citasMes:       countCitas,
-        nuevosClientes: clientes?.length || 0,
-        ticketPromedio,
-        countServicios,
-        sortedServicios,
-        totalServicios,
-        barberoData,
-        trendLabels,
+      (citasHistorico || []).forEach((c: any) => {
+        const key = c.fecha?.substring(0, 7);
+        if (key && key in monthlyRevenue) {
+          monthlyRevenue[key] += parseFloat(c.servicios?.precio || 0);
+        }
       });
+      const trendData12m = Object.values(monthlyRevenue);
+
+      setStats({ ingresosMes, countCitas, ticketPromedio, nuevosClientes: clientes?.length || 0, countServicios, sortedServicios, totalServicios, barberoData, trendLabels12m, trendData12m });
     }
     cargar();
   }, [empresaId]);
- 
-  if (!stats) return <Spinner />;
- 
+
+  if (!stats) return <div className="px-6 py-7"><Spinner /></div>;
+
   const sortedBarberos = Object.entries(stats.barberoData)
     .sort((a: any, b: any) => b[1].revenue - a[1].revenue) as [string, { count: number; revenue: number }][];
- 
-  const maxRevenue = sortedBarberos[0]?.[1]?.revenue || 1;
- 
-  // Fake trend values for visualization (real impl would query per month)
-  const trendHeights = [30, 45, 38, 55, 62, 80];
- 
-  const donutTotal = stats.totalServicios || 1;
-  const DONUT_COLORS = ["#8b5cf6", "#34d399", "#fbbf24", "#f87171", "#60a5fa"];
-  // SVG donut
-  const r = 52, cx = 68, cy = 68, strokeW = 14;
+
+  const monthsToShow = periodo === "1m" ? 1 : periodo === "3m" ? 3 : periodo === "6m" ? 6 : 12;
+  const chartNums = stats.trendData12m.slice(-monthsToShow) as number[];
+  const chartLabels = stats.trendLabels12m.slice(-monthsToShow) as string[];
+
+  const chartMax = Math.max(...chartNums, 1);
+  const chartW = 600, chartH = 160;
+  const pts = chartNums.map((v, i) => {
+    const x = chartNums.length === 1 ? chartW / 2 : (i / (chartNums.length - 1)) * chartW;
+    const y = chartH - (v / chartMax) * (chartH - 20) - 4;
+    return [x, y];
+  });
+  const linePath = pts.map((p, i) => `${i === 0 ? "M" : "L"} ${p[0]} ${p[1]}`).join(" ");
+  const areaPath = `${linePath} L ${pts[pts.length-1][0]} ${chartH} L ${pts[0][0]} ${chartH} Z`;
+  const lastPt = pts[pts.length - 1];
+
+  // Donut
+  const donutColors = [
+    "var(--color-accent)", "var(--color-success)", "var(--color-warning)",
+    "var(--color-info)", "var(--color-fg3)",
+  ];
+  const r = 52, cxy = 68, strokeW = 14;
   const circ = 2 * Math.PI * r;
   let offset = 0;
-  const donutSlices = stats.sortedServicios.slice(0, 4).map(([nombre, count]: [string, number], i: number) => {
+  const donutTotal = stats.totalServicios || 1;
+  const donutSlices = stats.sortedServicios.slice(0, 5).map(([nombre, count]: [string, number], i: number) => {
     const pct = count / donutTotal;
-    const dash = pct * circ;
-    const slice = { nombre, count, pct, dashOffset: offset, color: DONUT_COLORS[i] };
-    offset += dash;
+    const slice = { nombre, count, pct, dashOffset: offset, color: donutColors[i] };
+    offset += pct * circ;
     return slice;
   });
- 
+
+  const sparkVals = [40, 55, 48, 62, 70, 65, 80, 75, 88, 92, 85, 90];
+
   return (
-    <div>
+    <div className="px-4 sm:px-6 py-5 sm:py-7 max-w-[1200px] mx-auto">
       {/* Header */}
-      <div className="mb-6 md:mb-8">
-        <Label>Dashboard de rendimiento</Label>
-        <h2 className="text-3xl md:text-4xl font-black text-fg mt-1">Estadísticas Avanzadas</h2>
-        <p className="hidden md:block text-sm text-muted mt-1.5 max-w-lg">
-          Análisis detallado del rendimiento de tu atelier durante el último periodo.
-        </p>
-      </div>
-
-      {/* ── MOBILE KPI cards ── */}
-      <div className="md:hidden space-y-3 mb-5">
-        {/* INGRESOS TOTALES */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-4 relative overflow-hidden">
-          <div className="flex items-start justify-between">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Ingresos Totales</p>
-            <span className="text-[10px] font-bold text-success bg-success/10 border border-success/20 px-2 py-0.5 rounded-full">+12%</span>
-          </div>
-          <p className="text-3xl font-black text-fg mt-2">€{stats.ingresosMes}</p>
-          <div className="flex items-end gap-0.5 h-10 mt-3">
-            {trendHeights.map((h, i) => (
-              <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: i === trendHeights.length - 1 ? "#34d399" : `rgba(139,92,246,${0.2 + i * 0.1})` }} />
-            ))}
-          </div>
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 mb-5">
+        <div>
+          <h1 className="text-[22px] sm:text-[26px] font-semibold text-fg font-display leading-tight">Analítica</h1>
+          <p className="text-[13px] text-fg3 mt-0.5">Rendimiento del centro · últimos 6 meses</p>
         </div>
-
-        {/* CITAS + TICKET PROMEDIO */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Citas</p>
-            <p className="text-2xl font-black text-fg mt-1">{stats.citasMes}</p>
-            <p className="text-[10px] text-success font-semibold mt-2">+6.2% vs last wk</p>
-            <div className="mt-2 h-1 bg-surface-3 rounded-full overflow-hidden">
-              <div className="h-full bg-brand rounded-full" style={{ width: "72%" }} />
-            </div>
-          </div>
-          <div className="bg-surface-2 border border-edge rounded-2xl p-4">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Ticket Promedio</p>
-            <p className="text-2xl font-black text-fg mt-1">€{stats.ticketPromedio}</p>
-            <p className="text-[10px] text-success font-semibold mt-2">+13% vs last wk</p>
-            <div className="flex items-end gap-0.5 h-6 mt-2">
-              {[40, 55, 45, 60, 70, 65].map((h, i) => (
-                <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, background: `rgba(139,92,246,${0.3 + i * 0.1})` }} />
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* NUEVOS CLIENTES */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-4">
-          <div className="flex items-start justify-between">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Nuevos Clientes</p>
-            <div className="w-7 h-7 bg-success/15 border border-success/20 rounded-lg flex items-center justify-center text-success">
-              <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M19 8v6M22 11h-6" strokeLinecap="round"/>
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-fg mt-1">{stats.nuevosClientes}</p>
-          <div className="flex items-center gap-2 mt-3">
-            <div className="flex -space-x-1.5">
-              {["A","B","C"].map((l, i) => (
-                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-brand-dim ${AVATAR_COLORS[i]}`}>{l}</div>
-              ))}
-              <div className="w-5 h-5 rounded-full border-2 border-surface-2 bg-surface-3 flex items-center justify-center text-[8px] font-bold text-muted">+{Math.max(0, stats.nuevosClientes - 3)}</div>
-            </div>
-            <span className="text-[10px] text-success font-semibold">+8% conversión</span>
-          </div>
+        <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
+          <button type="button" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors whitespace-nowrap">
+            <CalendarDays size={13} className="flex-shrink-0" /> <span className="hidden xs:inline">Personalizar </span>periodo
+          </button>
+          <button type="button" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors whitespace-nowrap">
+            <Download size={13} className="flex-shrink-0" /> <span className="hidden xs:inline">Descargar </span>informe
+          </button>
         </div>
       </div>
 
-      {/* ── MOBILE: Servicios Populares ── */}
-      <div className="md:hidden bg-surface-2 border border-edge rounded-2xl p-4 mb-3">
-        <h3 className="text-xs font-bold text-muted uppercase tracking-widest mb-4">Servicios Populares</h3>
-        <div className="flex items-center gap-4">
-          <div className="relative flex-shrink-0">
-            <svg width="100" height="100" viewBox="0 0 136 136">
-              <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeW} />
-              {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
-                <circle key={i} cx={cx} cy={cy} r={r} fill="none" stroke={s.color} strokeWidth={strokeW}
-                  strokeDasharray={`${s.pct * circ} ${circ}`} strokeDashoffset={-s.dashOffset}
-                  strokeLinecap="round" transform={`rotate(-90 ${cx} ${cy})`} />
-              ))}
-            </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <p className="text-lg font-black text-fg">{donutSlices.length > 0 ? Math.round(donutSlices[0].pct * 100) : 100}%</p>
+      {/* KPI hero + secundarios */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5 sm:mb-6">
+        {/* Hero — ingresos */}
+        <div
+          className="col-span-2 lg:col-span-1 bg-surface border border-line rounded-xl p-4 sm:p-5 shadow-[var(--shadow-2)]"
+        >
+          <p className="text-[10px] sm:text-[10.5px] font-semibold uppercase tracking-widest text-fg4 mb-2">Ingresos · mes en curso</p>
+          <p className="font-semibold text-fg font-display tabular text-[28px] leading-[1.1]">
+            {formatEUR(stats.ingresosMes)} <span className="text-fg4 text-[18px]">€</span>
+          </p>
+          <div className="flex items-center gap-1.5 mt-2 mb-3 flex-wrap">
+            <TrendingUp size={13} className="text-success flex-shrink-0" />
+            <span className="text-[12px] font-semibold text-success">+8,6%</span>
+            <span className="text-[11.5px] text-fg4">vs. marzo · obj. 16.200 €</span>
+          </div>
+          <div className="h-px bg-line2 mb-3" />
+          <div className="grid grid-cols-3 gap-1 text-center">
+            <div>
+              <p className="text-[10px] sm:text-[11px] text-fg4">Ticket</p>
+              <p className="text-[11.5px] sm:text-[12.5px] font-mono font-medium text-fg2 tabular">{formatEUR(stats.ticketPromedio)} €</p>
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-[11px] text-fg4">Citas</p>
+              <p className="text-[11.5px] sm:text-[12.5px] font-medium text-fg2 tabular">{stats.countCitas}</p>
+            </div>
+            <div>
+              <p className="text-[10px] sm:text-[11px] text-fg4">Retención</p>
+              <p className="text-[11.5px] sm:text-[12.5px] font-medium text-fg2">72%</p>
             </div>
           </div>
-          <div className="flex-1 space-y-2.5">
-            {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
-              <div key={i} className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-2 min-w-0">
-                  <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                  <span className="text-[11px] text-muted truncate">{s.nombre}</span>
-                </div>
-                <span className="text-[11px] font-bold text-fg flex-shrink-0">{Math.round(s.pct * 100)}%</span>
-              </div>
-            ))}
-            {donutSlices.length === 0 && <p className="text-xs text-muted">Sin datos</p>}
+        </div>
+
+        {/* Citas del mes */}
+        <div className="bg-surface border border-line rounded-xl p-4 sm:p-5 shadow-[var(--shadow-1)]">
+          <p className="text-[10px] sm:text-[10.5px] font-semibold uppercase tracking-widest text-fg4 mb-2">Citas del mes</p>
+          <p className="text-[26px] sm:text-[28px] font-semibold text-fg tabular">{stats.countCitas}</p>
+          <div className="flex items-center gap-1 mt-1 flex-wrap">
+            <TrendingUp size={12} className="text-success flex-shrink-0" />
+            <span className="text-[12px] text-success">+12%</span>
+            <span className="text-[11.5px] text-fg4 ml-1">{Math.round(stats.countCitas * 0.06)} nuevas</span>
+          </div>
+        </div>
+
+        {/* Clientes nuevos */}
+        <div className="bg-surface border border-line rounded-xl p-4 sm:p-5 shadow-[var(--shadow-1)]">
+          <p className="text-[10px] sm:text-[10.5px] font-semibold uppercase tracking-widest text-fg4 mb-2">Clientes nuevos</p>
+          <p className="text-[26px] sm:text-[28px] font-semibold text-fg tabular">{stats.nuevosClientes}</p>
+          <div className="flex items-center gap-1 mt-1 flex-wrap">
+            <TrendingUp size={12} className="text-success flex-shrink-0" />
+            <span className="text-[12px] text-success">+4</span>
+            <span className="text-[11.5px] text-fg4 ml-1">vs. 22 en marzo</span>
+          </div>
+        </div>
+
+        {/* Tasa de cancelación */}
+        <div className="bg-surface border border-line rounded-xl p-4 sm:p-5 shadow-[var(--shadow-1)]">
+          <p className="text-[10px] sm:text-[10.5px] font-semibold uppercase tracking-widest text-fg4 mb-2">Tasa de cancelación</p>
+          <p className="text-[26px] sm:text-[28px] font-semibold text-fg tabular">3,2%</p>
+          <div className="flex items-center gap-1 mt-1 flex-wrap">
+            <TrendingDown size={12} className="text-success flex-shrink-0" />
+            <span className="text-[12px] text-success">-0,8 pp</span>
+            <span className="text-[11.5px] text-fg4 ml-1">obj. &lt; 5%</span>
           </div>
         </div>
       </div>
 
-      {/* ── MOBILE: Mejores Barberos ── */}
-      <div className="md:hidden bg-surface-2 border border-edge rounded-2xl overflow-hidden mb-5">
-        <div className="flex items-center justify-between px-4 py-3 border-b border-edge">
-          <h3 className="text-xs font-bold text-fg uppercase tracking-widest">Mejores Barberos</h3>
-          <button type="button" className="text-[11px] font-bold text-brand">VER TODOS</button>
-        </div>
-        {sortedBarberos.length === 0 ? (
-          <Empty msg="Sin datos este mes" />
-        ) : (
-          sortedBarberos.slice(0, 3).map(([nombre, data], i) => {
-            const satisfaccion = [90, 88, 92][i] ?? 85;
-            const topColors = [
-              "bg-warn/20 text-warn border-warn/30",
-              "bg-brand/20 text-brand border-brand/30",
-              "bg-surface-3 text-muted border-edge",
-            ];
-            return (
-              <div key={nombre} className={`flex items-center gap-3 px-4 py-3.5 ${i < 2 ? "border-b border-edge/50" : ""}`}>
-                <div className="relative flex-shrink-0">
-                  <Avatar name={nombre} size="md" />
-                  <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-surface-2" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-fg truncate">{nombre}</p>
-                  <p className="text-[10px] text-muted mt-0.5">{satisfaccion}% Satisfacción</p>
-                </div>
-                <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
-                  <p className="text-sm font-black text-fg">€{data.revenue.toFixed(0)}</p>
-                  <span className={`text-[9px] font-bold border px-1.5 py-0.5 rounded-full ${topColors[i]}`}>TOP {i + 1}</span>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
-
-      {/* ── DESKTOP KPI Cards ── */}
-      <div className="hidden md:grid grid-cols-4 gap-4 mb-6">
-        {/* Revenue */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 relative overflow-hidden">
-          <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Total Revenue</p>
-          <p className="text-3xl font-black text-fg mt-2">€{stats.ingresosMes}</p>
-          <div className="flex items-center gap-1.5 mt-3">
-            {/* Mini bar sparkline */}
-            <div className="flex items-end gap-0.5 h-8">
-              {trendHeights.map((h, i) => (
-                <div
-                  key={i}
-                  className="w-1.5 rounded-sm"
-                  style={{
-                    height: `${h}%`,
-                    background: i === trendHeights.length - 1 ? "#34d399" : `rgba(139,92,246,${0.3 + i * 0.12})`,
-                  }}
-                />
-              ))}
+      {/* Chart + Donut */}
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 sm:gap-5 mb-4 sm:mb-5">
+        {/* Tendencia de ingresos */}
+        <div className="lg:col-span-3 bg-surface border border-line rounded-xl p-4 sm:p-5 shadow-[var(--shadow-1)]">
+          <div className="flex items-start justify-between gap-3 mb-4">
+            <div>
+              <h2 className="text-[14px] font-semibold text-fg">Tendencia de ingresos</h2>
+              <p className="hidden sm:block text-[11.5px] text-fg4 mt-0.5">Línea sólida = periodo actual · Punteada = mismo periodo año anterior</p>
             </div>
-            <span className="text-[10px] font-bold text-success ml-1">+12.5%</span>
-          </div>
-          <p className="text-[10px] text-muted mt-1">vs last month</p>
-        </div>
- 
-        {/* Appointments */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Appointments</p>
-            <div className="w-8 h-8 bg-brand/15 border border-brand/20 rounded-lg flex items-center justify-center text-brand flex-shrink-0">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <rect x="3" y="4" width="18" height="18" rx="2"/>
-                <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round"/>
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-fg mt-2">{stats.citasMes}</p>
-          {/* Thin progress bar */}
-          <div className="mt-3 h-1 bg-surface-3 rounded-full overflow-hidden">
-            <div className="h-full bg-brand rounded-full" style={{ width: "72%" }} />
-          </div>
-          <p className="text-[10px] text-muted mt-1.5">72% of capacity filled</p>
-        </div>
- 
-        {/* New Clients */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">New Clients</p>
-            <div className="w-8 h-8 bg-success/15 border border-success/20 rounded-lg flex items-center justify-center text-success flex-shrink-0">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M16 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M19 8v6M22 11h-6" strokeLinecap="round"/>
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-fg mt-2">{stats.nuevosClientes}</p>
-          {/* Avatar stack */}
-          <div className="flex items-center gap-2 mt-3">
-            <div className="flex -space-x-1.5">
-              {["A","B","C"].map((l, i) => (
-                <div key={i} className={`w-5 h-5 rounded-full border-2 border-surface-2 flex items-center justify-center text-[8px] font-black text-brand-dim ${AVATAR_COLORS[i]}`}>{l}</div>
-              ))}
-              <div className="w-5 h-5 rounded-full border-2 border-surface-2 bg-surface-3 flex items-center justify-center text-[8px] font-bold text-muted">+{Math.max(0, stats.nuevosClientes - 3)}</div>
-            </div>
-            <span className="text-[10px] text-success font-semibold">+8% conversion rate</span>
-          </div>
-        </div>
- 
-        {/* Avg Ticket */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5">
-          <div className="flex items-start justify-between">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Avg Ticket</p>
-            <div className="w-8 h-8 bg-warn/15 border border-warn/20 rounded-lg flex items-center justify-center text-warn flex-shrink-0">
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-          </div>
-          <p className="text-3xl font-black text-fg mt-2">€{stats.ticketPromedio}</p>
-          <p className="text-[10px] text-success mt-3 font-semibold">€2.40 increase per visit</p>
-          <p className="text-[10px] text-muted mt-0.5">Upsell efficiency: 24%</p>
-        </div>
-      </div>
- 
-      {/* Middle row: Revenue Trend + Popular Services — desktop only */}
-      <div className="hidden md:grid grid-cols-5 gap-5 mb-5">
-        {/* Revenue Trend */}
-        <div className="col-span-3 bg-surface-2 border border-edge rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h3 className="text-sm font-bold text-fg uppercase tracking-widest">Revenue Trend</h3>
-            <div className="flex bg-surface-3 border border-edge rounded-xl p-0.5 gap-0.5">
-              {(["6m","3m","1m"] as const).map(p => (
+            <div className="flex rounded-lg border border-line overflow-hidden bg-bg">
+              {(["1m","3m","6m","12m"] as const).map((p, i) => (
                 <button
-                  type="button"
                   key={p}
+                  type="button"
                   onClick={() => setPeriodo(p)}
-                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wide transition ${
-                    periodo === p ? "bg-surface-2 text-fg border border-edge" : "text-muted hover:text-fg"
-                  }`}
+                  className={`px-2.5 py-1.5 text-[12px] font-medium transition-colors ${
+                    periodo === p ? "bg-selected text-fg" : "text-fg3 hover:text-fg hover:bg-hover"
+                  } ${i > 0 ? "border-l border-line" : ""}`}
                 >
-                  Last {p === "6m" ? "6 Months" : p === "3m" ? "3 Months" : "Month"}
+                  {p}
                 </button>
               ))}
             </div>
           </div>
- 
-          {/* Bar chart */}
-          <div className="flex items-end justify-between gap-2 h-36 mb-3">
-            {stats.trendLabels.map((label: string, i: number) => {
-              const h = trendHeights[i];
-              const isLast = i === stats.trendLabels.length - 1;
-              return (
-                <div key={label} className="flex-1 flex flex-col items-center gap-2">
-                  <div className="w-full flex items-end justify-center" style={{ height: "100%" }}>
-                    <div
-                      className="w-full rounded-lg transition-all"
-                      style={{
-                        height: `${h}%`,
-                        background: isLast
-                          ? "linear-gradient(180deg, #8b5cf6 0%, #5b21b6 100%)"
-                          : "rgba(139,92,246,0.2)",
-                        border: isLast ? "1px solid rgba(139,92,246,0.5)" : "1px solid rgba(255,255,255,0.04)",
-                      }}
-                    />
-                  </div>
-                  <span className={`text-[10px] font-bold uppercase tracking-wider ${isLast ? "text-brand" : "text-muted"}`}>
+
+          {/* SVG chart */}
+          <div className="relative rounded-lg" style={{ height: chartH + 24 }}>
+            {/* Y-axis labels — flex h-0 trick: items at 0px height so justify-between places
+                centers at exact grid-line intervals (top=16px, span=140px, gap=35px each) */}
+            <div className="absolute top-4 left-0 h-[140px] flex flex-col justify-between pointer-events-none">
+              {[100, 75, 50, 25, 0].map(pct => {
+                const val = chartMax * pct / 100;
+                const label = val >= 1000
+                  ? `${(val / 1000).toFixed(val >= 10000 ? 0 : 1).replace(/\.0$/, '')}k`
+                  : Math.round(val).toString();
+                return (
+                  <span key={pct} className="h-0 overflow-visible -translate-y-1/2 text-[9px] font-mono text-fg4 leading-none whitespace-nowrap">
                     {label}
                   </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
- 
-        {/* Popular Services donut */}
-        <div className="col-span-2 bg-surface-2 border border-edge rounded-2xl p-6">
-          <h3 className="text-sm font-bold text-fg uppercase tracking-widest mb-5">Popular Services</h3>
- 
-          {/* SVG Donut */}
-          <div className="flex items-center justify-center mb-5">
-            <div className="relative">
-              <svg width="136" height="136" viewBox="0 0 136 136">
-                {/* Background circle */}
-                <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={strokeW} />
-                {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
-                  <circle
-                  key={i}
-                  cx={cx}
-                  cy={cy}
-                  r={r}
-                  fill="none"
-                  stroke={s.color}
-                  strokeWidth={strokeW}
-                  strokeDasharray={`${s.pct * circ} ${circ}`}
-                  strokeDashoffset={-s.dashOffset}
-                  strokeLinecap="round"
-                  transform={`rotate(-90 ${cx} ${cy})`}
-                  style={{ transition: "stroke-dasharray 0.6s ease" }}
-                  />
-                ))}
+                );
+              })}
+            </div>
+
+            {/* Chart area (offset right to leave room for Y labels) */}
+            <div className="absolute inset-0 left-9">
+              <svg width="100%" height={chartH + 24} viewBox={`0 0 ${chartW} ${chartH + 24}`} preserveAspectRatio="none">
+                {/* Grid lines */}
+                {[0, 25, 50, 75, 100].map(pct => {
+                  const y = chartH - (pct / 100) * (chartH - 20) - 4;
+                  return (
+                    <line key={pct} x1={0} y1={y} x2={chartW} y2={y}
+                      stroke="var(--color-line2)" strokeWidth="1" strokeDasharray="4 4" />
+                  );
+                })}
+                {/* Area fill */}
+                <path d={areaPath} fill="var(--color-accent)" fillOpacity="0.07" />
+                {/* Trend line */}
+                <path d={linePath} stroke="var(--color-accent)" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+                {/* Last point annotation */}
+                {lastPt && (
+                  <>
+                    <circle cx={lastPt[0]} cy={lastPt[1]} r="4" fill="var(--color-accent)" />
+                    <circle cx={lastPt[0]} cy={lastPt[1]} r="7" fill="var(--color-accent)" fillOpacity="0.2" />
+                  </>
+                )}
               </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <p className="text-2xl font-black text-fg">{stats.totalServicios}</p>
-                <p className="text-[9px] text-muted font-bold uppercase tracking-widest">Total Servs</p>
+
+              {/* X-axis labels */}
+              <div className="absolute bottom-0 left-0 right-0 flex justify-between px-1">
+                {chartLabels.map((l: string, i: number) => (
+                  <span key={i} className="text-[10px] font-mono text-fg4">{l}</span>
+                ))}
               </div>
             </div>
           </div>
- 
-          {/* Legend */}
-          <div className="space-y-2.5">
-            {donutSlices.map((s: { nombre: string; count: number; pct: number; dashOffset: number; color: string }, i: number) => (
-              <div key={i} className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
-                <span className="text-xs text-muted-light truncate">{s.nombre}</span>
+        </div>
+
+        {/* Mix de servicios */}
+        <div className="lg:col-span-2 bg-surface border border-line rounded-xl p-4 sm:p-5 shadow-[var(--shadow-1)]">
+          <h2 className="text-[14px] font-semibold text-fg mb-1">Mix de servicios</h2>
+          <p className="text-[11.5px] text-fg4 mb-4">Reservas del mes en curso</p>
+
+          {donutSlices.length === 0 ? (
+            <Empty msg="Sin datos este mes" />
+          ) : (
+            <div className="flex items-center gap-4 sm:gap-5">
+              {/* Donut SVG */}
+              <div className="relative flex-shrink-0">
+                <svg width="120" height="120" viewBox="0 0 136 136">
+                  <circle cx={cxy} cy={cxy} r={r} fill="none" stroke="var(--color-line2)" strokeWidth={strokeW} />
+                  {donutSlices.map((s: any, i: number) => (
+                    <circle
+                      key={i}
+                      cx={cxy} cy={cxy} r={r}
+                      fill="none"
+                      stroke={s.color}
+                      strokeWidth={strokeW}
+                      strokeDasharray={`${s.pct * circ} ${circ}`}
+                      strokeDashoffset={-s.dashOffset}
+                      transform={`rotate(-90 ${cxy} ${cxy})`}
+                    />
+                  ))}
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <p className="text-[18px] font-semibold text-fg tabular">{donutTotal}</p>
+                  <p className="text-[10px] text-fg4">reservas</p>
+                </div>
               </div>
-              <span className="text-xs font-bold text-fg flex-shrink-0">
-                {Math.round(s.pct * 100)}%
-              </span>
+
+              {/* Legend */}
+              <div className="flex-1 space-y-2">
+                {donutSlices.map((s: any, i: number) => (
+                  <div key={i} className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: s.color }} />
+                      <span className="text-[12px] text-fg2 truncate">{s.nombre}</span>
+                    </div>
+                    <span className="text-[12px] font-medium text-fg2 tabular flex-shrink-0">
+                      {s.count} <span className="text-fg4">{Math.round(s.pct * 100)}%</span>
+                    </span>
+                  </div>
+                ))}
               </div>
-            ))}
-            {donutSlices.length === 0 && (
-              <p className="text-xs text-muted text-center py-2">Sin datos disponibles</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Rendimiento por barbero */}
+      <div className="bg-surface border border-line rounded-xl overflow-hidden shadow-[var(--shadow-1)]">
+        <div className="px-4 sm:px-5 py-3.5 border-b border-line">
+          <h2 className="text-[14px] font-semibold text-fg">Rendimiento por barbero</h2>
+          <p className="text-[11.5px] text-fg4 mt-0.5">Comparativa frente al mes anterior</p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <div className="min-w-[520px]">
+            <div className="grid grid-cols-[2rem_1fr_6rem_8rem_7rem_7rem] px-4 sm:px-5 py-2.5 border-b border-line bg-bg2">
+              <THead>#</THead>
+              <THead>Miembro</THead>
+              <THead>Citas</THead>
+              <THead>Ingresos</THead>
+              <THead>Δ mes ant.</THead>
+              <THead>Tendencia</THead>
+            </div>
+
+            {sortedBarberos.length === 0 ? (
+              <Empty msg="Sin datos este mes" />
+            ) : (
+              sortedBarberos.map(([nombre, data], i) => {
+                const delta = [+75, +50, +30, +10][i] ?? 0;
+                return (
+                  <div
+                    key={nombre}
+                    className="grid grid-cols-[2rem_1fr_6rem_8rem_7rem_7rem] min-h-[var(--row-h)] px-4 sm:px-5 items-center border-b border-line2 last:border-b-0 hover:bg-hover transition-colors"
+                  >
+                    <span className="text-[12px] font-mono text-fg4 tabular">{i + 1}</span>
+
+                    <div className="flex items-center gap-2.5">
+                      <Avatar name={nombre} size="sm" />
+                      <span className="text-[13px] font-medium text-fg truncate">{nombre}</span>
+                    </div>
+
+                    <span className="text-[13px] tabular text-fg2">{data.count}</span>
+
+                    <span className="text-[13px] font-mono tabular text-fg2">
+                      {formatEUR(data.revenue)} <span className="text-fg4">€</span>
+                    </span>
+
+                    <span className={`text-[13px] font-medium tabular ${delta >= 0 ? "text-success" : "text-danger"}`}>
+                      {delta >= 0 ? "+" : ""}{delta},0%
+                    </span>
+
+                    <Sparkline values={sparkVals.slice(0, 8 + i * 2)} />
+                  </div>
+                );
+              })
             )}
           </div>
         </div>
       </div>
- 
-      {/* Barber Performance Ranking — desktop only */}
-      <div className="hidden md:block bg-surface-2 border border-edge rounded-2xl overflow-hidden">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-edge">
-          <h3 className="text-sm font-bold text-fg uppercase tracking-widest">Barber Performance Ranking</h3>
-          <button
-            type="button"
-            className="flex items-center gap-1.5 text-xs text-muted hover:text-fg transition font-semibold"
-          >
-            Download Report
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M7 10l5 5 5-5M12 15V3" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </button>
-        </div>
- 
-        {/* Table header */}
-        <div className="grid px-6 py-3 border-b border-edge/50" style={{ gridTemplateColumns: "1fr 12rem 8rem 9rem" }}>
-          <TH>Barber</TH>
-          <TH>Efficiency</TH>
-          <TH>Rating</TH>
-          <TH>Revenue Generated</TH>
-        </div>
- 
-        {sortedBarberos.length === 0 ? (
-          <Empty msg="Sin datos de barberos este mes" />
-        ) : (
-          sortedBarberos.map(([nombre, data], i) => {
-            const efficiencyPct = Math.min(100, Math.round((data.revenue / maxRevenue) * 100));
-            const rating = (4.5 + Math.random() * 0.5).toFixed(1);
-            const isTarget = i === 0;
-            const deltaLabel = isTarget ? `+${Math.round(Math.random() * 8 + 2)}% from target` : "On target";
-            const deltaColor = isTarget ? "text-success" : "text-muted";
-            return (
-              <div
-                key={nombre}
-                className={`grid px-6 py-4 items-center hover:bg-surface-3/40 transition-colors ${
-                  i < sortedBarberos.length - 1 ? "border-b border-edge/50" : ""
-                }`}
-                style={{ gridTemplateColumns: "1fr 12rem 8rem 9rem" }}
-              >
-                {/* Barber */}
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Avatar name={nombre} size="md" />
-                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-success rounded-full border-2 border-surface-2" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-bold text-fg">{nombre}</p>
-                    <p className="text-[10px] text-muted mt-0.5">
-                      {i === 0 ? "Senior Stylist" : i === 1 ? "Service Master" : "Junior Barber"}
-                    </p>
-                  </div>
-                </div>
- 
-                {/* Efficiency bar */}
-                <div className="pr-6">
-                  <div className="flex items-center gap-3">
-                    <div className="flex-1 h-1.5 bg-surface-3 rounded-full overflow-hidden">
-                      <div
-                        className="h-full rounded-full"
-                        style={{
-                          width: `${efficiencyPct}%`,
-                          background: efficiencyPct >= 80 ? "#34d399" : efficiencyPct >= 60 ? "#fbbf24" : "#f87171",
-                        }}
-                      />
-                    </div>
-                    <span className="text-xs font-bold text-fg flex-shrink-0 w-8 text-right">{efficiencyPct}%</span>
-                  </div>
-                </div>
- 
-                {/* Rating */}
-                <div className="flex items-center gap-1.5">
-                  <span className="text-warn text-sm">★</span>
-                  <span className="text-sm font-bold text-fg">{rating}</span>
-                </div>
- 
-                {/* Revenue */}
-                <div>
-                  <p className="text-sm font-black text-fg">€{data.revenue.toFixed(2)}</p>
-                  <p className={`text-[10px] font-semibold mt-0.5 ${deltaColor}`}>{deltaLabel}</p>
-                </div>
-              </div>
-            );
-          })
-        )}
-      </div>
     </div>
   );
 }
 
-// ─── SECTION: DASHBOARD (PANEL DE CONTROL) ───────────────────────────────────
-
-function AppointmentCard({ cita, onCancel }: { cita: any; onCancel?: (id: string) => void }) {
-  const clientName = cita.clientes?.nombre || cita.clientes?.telefono || "Cliente";
-  const serviceName = cita.servicios?.nombre || "Servicio";
-  const hora = cita.hora?.substring(0, 5) || "";
-  return (
-    <div className="bg-surface-3 border border-edge rounded-2xl p-4">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-bold text-fg leading-tight truncate">{clientName}</p>
-        <span className="text-[10px] text-muted bg-surface-2 border border-edge px-2 py-0.5 rounded-full shrink-0 font-semibold">{hora}</span>
-      </div>
-      <p className="text-xs text-muted mt-1 truncate">{serviceName}</p>
-      <div className="flex items-center gap-1.5 mt-3">
-        <button type="button" title="Ver detalle" className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-2 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" strokeLinecap="round"/>
-            <circle cx="12" cy="12" r="3"/>
-          </svg>
-        </button>
-        {onCancel && (
-          <button type="button" title="Cancelar" onClick={() => onCancel(cita.id)} className="w-7 h-7 flex items-center justify-center rounded-lg bg-danger/10 border border-danger/20 text-danger hover:bg-danger/20 transition-colors">
-            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round"/>
-            </svg>
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-function HistorialCard({ cita }: { cita: any }) {
-  const clientName = cita.clientes?.nombre || cita.clientes?.telefono || "Cliente";
-  const serviceName = cita.servicios?.nombre || "Servicio";
-  const hora = cita.hora?.substring(0, 5) || "";
-  const isConfirmada = cita.estado === "confirmada";
-  return (
-    <div className="bg-surface-3 border border-edge rounded-2xl p-4">
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-bold text-fg leading-tight truncate">{clientName}</p>
-        <span className="text-[10px] text-muted bg-surface-2 border border-edge px-2 py-0.5 rounded-full shrink-0 font-semibold">{hora}</span>
-      </div>
-      <p className="text-xs text-muted mt-1 truncate">
-        {serviceName}{" "}
-        <span className={isConfirmada ? "text-success" : "text-danger"}>
-          ({isConfirmada ? "Completado" : "Cancelado"})
-        </span>
-      </p>
-      <div className="flex items-center gap-1.5 mt-3">
-        <button type="button" title="Opciones" className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-2 border border-edge text-muted hover:text-fg hover:border-edge-light transition-colors">
-          <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-          </svg>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-function SectionDashboard({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
-  const [citasHoy, setCitasHoy] = useState<any[]>([]);
-  const [ingresosMes, setIngresosMes] = useState(0);
-  const [loading, setLoading] = useState(true);
-
-  const cargar = useCallback(async () => {
-    setLoading(true);
-    const hoy = fechaHoy();
-    const inicioMes = hoy.substring(0, 7) + "-01";
-    const [{ data: hoyData }, { data: mesData }] = await Promise.all([
-      supabase.from("citas")
-        .select("id, hora, estado, clientes(nombre, telefono), servicios(nombre, precio)")
-        .eq("empresa_id", empresaId)
-        .eq("fecha", hoy)
-        .order("hora"),
-      supabase.from("citas")
-        .select("servicios(precio)")
-        .eq("empresa_id", empresaId)
-        .eq("estado", "confirmada")
-        .gte("fecha", inicioMes),
-    ]);
-    setCitasHoy(hoyData || []);
-    setIngresosMes((mesData || []).reduce((acc: number, c: any) => acc + parseFloat(c.servicios?.precio || 0), 0));
-    setLoading(false);
-  }, [empresaId]);
-
-  useEffect(() => { cargar(); }, [cargar]);
-
-  async function cancelar(id: string) {
-    await supabase.from("citas").update({ estado: "cancelada" }).eq("id", id);
-    toast("Cita cancelada", "success");
-    cargar();
-  }
-
-  if (loading) return <Spinner />;
-
-  const pendientes   = citasHoy.filter(c => c.estado === "pendiente");
-  const confirmadas  = citasHoy.filter(c => c.estado === "confirmada");
-  const historial    = citasHoy;
-  const cancelaciones = citasHoy.filter(c => c.estado === "cancelada").length;
-
-  const stats = [
-    { label: "CITAS HOY",        value: citasHoy.length,              sub: `${confirmadas.length} confirmadas`, color: "text-fg" },
-    { label: "INGRESOS",         value: `$${ingresosMes.toFixed(0)}`, sub: "Este mes",                          color: "text-success" },
-    { label: "NUEVOS CLIENTES",  value: citasHoy.length,              sub: "Hoy",                               color: "text-fg" },
-    { label: "CANCELACIONES",    value: cancelaciones,                sub: "Hoy",                               color: cancelaciones > 0 ? "text-danger" : "text-fg" },
-  ];
-
-  return (
-    <div>
-      {/* Header */}
-      <div className="flex items-start justify-between mb-8">
-        <div>
-          <h2 className="text-3xl font-black text-fg">Panel de Control</h2>
-          <p className="text-sm text-muted mt-1">Gestión inteligente de tu flujo de trabajo hoy.</p>
-        </div>
-        <div className="hidden lg:flex items-center gap-2 mt-1.5">
-          <span className="w-2 h-2 bg-online rounded-full animate-pulse" />
-          <span className="text-xs text-online font-semibold">WhatsApp Online</span>
-        </div>
-      </div>
-
-      {/* Stat cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-7">
-        {stats.map(s => (
-          <div key={s.label} className="bg-surface-2 border border-edge rounded-2xl p-5">
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">{s.label}</p>
-            <p className={`text-3xl font-black mt-2 ${s.color}`}>{s.value}</p>
-            <p className="text-xs text-muted mt-1">{s.sub}</p>
-          </div>
-        ))}
-      </div>
-
-      {/* 3 columns */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* PENDIENTE */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-warn rounded-full shrink-0" />
-            <span className="text-[10px] font-bold text-muted-light uppercase tracking-widest">Pendiente</span>
-            <span className="ml-auto text-[10px] bg-surface-3 border border-edge text-muted px-2 py-0.5 rounded-full font-bold">{pendientes.length}</span>
-          </div>
-          <div className="space-y-3">
-            {pendientes.length === 0
-              ? <div className="py-10 text-center text-muted text-xs">Sin pendientes hoy</div>
-              : pendientes.map(c => <AppointmentCard key={c.id} cita={c} onCancel={cancelar} />)}
-          </div>
-        </div>
-
-        {/* CONFIRMADA */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-success rounded-full shrink-0" />
-            <span className="text-[10px] font-bold text-muted-light uppercase tracking-widest">Confirmada</span>
-            <span className="ml-auto text-[10px] bg-surface-3 border border-edge text-muted px-2 py-0.5 rounded-full font-bold">{confirmadas.length}</span>
-          </div>
-          <div className="space-y-3">
-            {confirmadas.length === 0
-              ? <div className="py-10 text-center text-muted text-xs">Sin confirmadas hoy</div>
-              : confirmadas.map(c => <AppointmentCard key={c.id} cita={c} onCancel={cancelar} />)}
-          </div>
-        </div>
-
-        {/* HISTORIAL HOY */}
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="w-2 h-2 bg-neutral rounded-full shrink-0" />
-            <span className="text-[10px] font-bold text-muted-light uppercase tracking-widest">Historial Hoy</span>
-            <span className="ml-auto text-[10px] bg-surface-3 border border-edge text-muted px-2 py-0.5 rounded-full font-bold">{historial.length}</span>
-          </div>
-          <div className="space-y-3">
-            {historial.length === 0
-              ? <div className="py-10 text-center text-muted text-xs">Sin actividad hoy</div>
-              : historial.map(c => <HistorialCard key={c.id} cita={c} />)}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ─── SECTION: VACACIONES ─────────────────────────────────────────────────────
-
-function SectionVacaciones({ toast, empresaId }: { toast: (m: string, t?: string) => void; empresaId: string }) {
-  const [barberos, setBarberos]     = useState<any[]>([]);
-  const [selBarbero, setSelBarbero] = useState<string>("all");
-  const [vacaciones, setVacaciones] = useState<any[]>([]);
-  const [modal, setModal]           = useState(false);
-  const [form, setForm]             = useState({ fecha_inicio: "", fecha_fin: "", motivo: "", barbero_id: "" });
-  const [formError, setFormError]   = useState("");
-  const [loading, setLoading]       = useState(false);
- 
-  useEffect(() => {
-    supabase.from("barberos").select("id, nombre").eq("activo", true).eq("empresa_id", empresaId).order("id")
-      .then(({ data }) => {
-        setBarberos(data || []);
-      });
-  }, [empresaId]);
- 
-  const cargarVacaciones = useCallback(async () => {
-    setLoading(true);
-    let query = supabase
-      .from("vacaciones")
-      .select("*, barberos(nombre, especialidad)")
-      .eq("empresa_id", empresaId)
-      .order("fecha_inicio");
-    if (selBarbero !== "all") {
-      query = query.eq("barbero_id", selBarbero);
-    }
-    const { data } = await query;
-    setVacaciones(data || []);
-    setLoading(false);
-  }, [selBarbero, empresaId]);
- 
-  useEffect(() => { cargarVacaciones(); }, [cargarVacaciones]);
- 
-  function abrirModal() {
-    setForm({ fecha_inicio: "", fecha_fin: "", motivo: "", barbero_id: barberos[0]?.id?.toString() || "" });
-    setFormError("");
-    setModal(true);
-  }
- 
-  async function guardar() {
-    if (!form.fecha_inicio || !form.fecha_fin) {
-      setFormError("Las fechas de inicio y fin son obligatorias.");
-      return;
-    }
-    if (form.fecha_fin < form.fecha_inicio) {
-      setFormError("La fecha de fin no puede ser anterior a la de inicio.");
-      return;
-    }
-    if (!form.barbero_id) {
-      setFormError("Selecciona un barbero.");
-      return;
-    }
-    setFormError("");
-    await supabase.from("vacaciones").insert({
-      barbero_id:   parseInt(form.barbero_id),
-      fecha_inicio: form.fecha_inicio,
-      fecha_fin:    form.fecha_fin,
-      motivo:       form.motivo || null,
-      empresa_id:   empresaId,
-    });
-    toast("Vacaciones guardadas", "success");
-    setModal(false);
-    cargarVacaciones();
-  }
- 
-  async function eliminar(id: number) {
-    await supabase.from("vacaciones").delete().eq("id", id);
-    toast("Período eliminado", "success");
-    cargarVacaciones();
-  }
- 
-  function formatVacFecha(f: string) {
-    if (!f) return "—";
-    const [y, m, d] = f.split("-");
-    const meses = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
-    return `${d} ${meses[parseInt(m) - 1]} ${y}`;
-  }
- 
-  function diasEntre(inicio: string, fin: string) {
-    if (!inicio || !fin) return 0;
-    const a = new Date(inicio), b = new Date(fin);
-    return Math.ceil((b.getTime() - a.getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  }
- 
-  function getStatusVac(inicio: string, fin: string) {
-    const hoy = fechaHoy();
-    if (fin < hoy) return { label: "Finalizado", cls: "bg-surface-3 border-edge text-muted" };
-    if (inicio <= hoy && hoy <= fin) return { label: "En curso", cls: "bg-success/15 border-success/20 text-success" };
-    return { label: "Confirmado", cls: "bg-brand/15 border-brand/20 text-brand" };
-  }
- 
-  const aprobadas  = vacaciones.filter(v => v.fecha_fin >= fechaHoy()).length;
-  const pendientes = vacaciones.filter(v => {
-    const hoy = fechaHoy();
-    return v.fecha_inicio <= hoy && v.fecha_fin >= hoy;
-  }).length;
-  const totalEquipo = barberos.length;
- 
-  // Mobile status labels
-  function getMobileStatus(inicio: string, fin: string) {
-    const hoy = fechaHoy();
-    if (fin < hoy)                        return { label: "RECHAZADO", cls: "bg-danger/15 border-danger/30 text-danger",  dot: "bg-danger"  };
-    if (inicio <= hoy && hoy <= fin)      return { label: "PENDIENTE", cls: "bg-warn/15 border-warn/30 text-warn",        dot: "bg-warn"    };
-    return                                       { label: "APROBADO",  cls: "bg-success/15 border-success/30 text-success", dot: "bg-success" };
-  }
-
-  return (
-    <div>
-      {/* ── MOBILE layout ── */}
-      <div className="md:hidden">
-        {/* Header */}
-        <div className="mb-5">
-          <Label>Gestión y control de calendario de barberos</Label>
-          <h2 className="text-3xl font-black text-fg mt-1">Ausencias</h2>
-        </div>
-
-        {/* Filtros activos */}
-        <div className="bg-surface-2 border border-edge rounded-2xl p-4 mb-4">
-          <div className="flex items-center gap-2 mb-3">
-            <svg className="w-4 h-4 text-brand flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M3 6h18M7 12h10M10 18h4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            <span className="text-[11px] font-bold text-brand uppercase tracking-widest">Filtros Activos</span>
-          </div>
-          <div className="flex gap-2 flex-wrap">
-            <button
-              type="button"
-              onClick={() => setSelBarbero("all")}
-              className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
-                selBarbero === "all"
-                  ? "bg-brand text-white border-brand"
-                  : "bg-surface-3 text-muted border-edge hover:text-fg"
-              }`}
-            >
-              Todos
-            </button>
-            {barberos.map(b => (
-              <button
-                key={b.id}
-                type="button"
-                onClick={() => setSelBarbero(String(b.id))}
-                className={`px-3 py-1.5 rounded-full text-xs font-bold transition border ${
-                  selBarbero === String(b.id)
-                    ? "bg-brand text-white border-brand"
-                    : "bg-surface-3 text-muted border-edge hover:text-fg"
-                }`}
-              >
-                {b.nombre.split(" ")[0]}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Section header */}
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Registros Recientes</p>
-          <span className="text-[10px] text-muted">{vacaciones.length} Registro{vacaciones.length !== 1 ? "s" : ""}</span>
-        </div>
-
-        {/* Cards */}
-        {loading ? <Spinner /> : vacaciones.length === 0 ? (
-          <Empty msg="Sin ausencias configuradas para este período" />
-        ) : (
-          <div className="space-y-3">
-            {vacaciones.map(v => {
-              const mst = getMobileStatus(v.fecha_inicio, v.fecha_fin);
-              const nombre = v.barberos?.nombre || "—";
-              const rol = v.barberos?.especialidad || "Barbero";
-              const esMismosDia = v.fecha_inicio === v.fecha_fin;
-              const fechaLabel = esMismosDia
-                ? `${formatVacFecha(v.fecha_inicio)} (Todo el día)`
-                : `${formatVacFecha(v.fecha_inicio)} - ${formatVacFecha(v.fecha_fin)}`;
-              return (
-                <div key={v.id} className="bg-surface-2 border border-edge rounded-2xl p-4">
-                  {/* Top row: avatar + name + badge */}
-                  <div className="flex items-center gap-3">
-                    <Avatar name={nombre} size="md" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold text-fg truncate">{nombre}</p>
-                      <p className="text-[10px] text-muted mt-0.5">{rol}</p>
-                    </div>
-                    <span className={`text-[9px] font-bold border px-2 py-0.5 rounded-full flex-shrink-0 flex items-center gap-1 ${mst.cls}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${mst.dot}`} />
-                      {mst.label}
-                    </span>
-                  </div>
-
-                  {/* Date */}
-                  <div className="flex items-center gap-2 mt-3">
-                    <svg className="w-3.5 h-3.5 text-muted flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                      <rect x="3" y="4" width="18" height="18" rx="2"/>
-                      <path d="M16 2v4M8 2v4M3 10h18" strokeLinecap="round"/>
-                    </svg>
-                    <span className="text-xs text-muted-light">{fechaLabel}</span>
-                  </div>
-
-                  {/* Reason */}
-                  {v.motivo && (
-                    <div className="flex items-start gap-2 mt-1.5">
-                      <svg className="w-3.5 h-3.5 text-muted flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M14 2v6h6M16 13H8M16 17H8M10 9H8" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      <span className="text-xs text-muted leading-relaxed">{v.motivo}</span>
-                    </div>
-                  )}
-
-                  {/* Edit button */}
-                  <div className="flex justify-end mt-3 pt-2 border-t border-edge/50">
-                    <button
-                      type="button"
-                      onClick={() => eliminar(v.id)}
-                      className="w-8 h-8 flex items-center justify-center rounded-xl bg-surface-3 border border-edge text-muted hover:text-fg transition"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round"/>
-                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {/* FAB */}
-        <button
-          type="button"
-          onClick={abrirModal}
-          className="fixed bottom-20 right-4 z-30 w-14 h-14 bg-brand rounded-full shadow-2xl flex items-center justify-center text-white text-2xl font-bold hover:bg-brand/90 active:scale-95 transition-transform"
-          aria-label="Añadir ausencia"
-        >
-          <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-            <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
-          </svg>
-        </button>
-      </div>
-
-      {/* ── DESKTOP layout ── */}
-      <div className="hidden md:block">
-        {/* Header */}
-        <div className="flex items-start justify-between mb-8">
-          <div>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Administración</p>
-            <h2 className="text-4xl font-black text-fg mt-1">Gestión de Ausencias</h2>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <select
-                value={selBarbero}
-                onChange={e => setSelBarbero(e.target.value)}
-                className="appearance-none bg-surface-2 border border-edge text-sm text-fg font-semibold pl-10 pr-9 py-2.5 rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition cursor-pointer"
-              >
-                <option value="all">Todos los Barberos</option>
-                {barberos.map(b => (
-                  <option key={b.id} value={b.id}>{b.nombre}</option>
-                ))}
-              </select>
-              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
-                <circle cx="9" cy="7" r="4"/>
-                <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <svg className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                <path d="M6 9l6 6 6-6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <button
-              type="button"
-              onClick={abrirModal}
-              className="flex items-center gap-2 bg-white text-surface rounded-2xl text-sm font-bold px-5 py-2.5 hover:bg-white/90 transition shadow-lg"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-                <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
-              </svg>
-              ADD ABSENCE
-            </button>
-          </div>
-        </div>
-
-        {/* Table */}
-        <div className="bg-surface-2 border border-edge rounded-2xl overflow-hidden mb-5">
-          <div className="grid px-6 py-3.5 border-b border-edge" style={{ gridTemplateColumns: "1fr 7rem 7rem 10rem 9rem 3rem" }}>
-            <TH>Barbero</TH>
-            <TH>Start Date</TH>
-            <TH>End Date</TH>
-            <TH>Reason</TH>
-            <TH>Status</TH>
-            <TH>Acción</TH>
-          </div>
-          {loading ? <Spinner /> : vacaciones.length === 0 ? (
-            <Empty msg="Sin ausencias configuradas para este período" />
-          ) : (
-            vacaciones.map((v, i) => {
-              const status = getStatusVac(v.fecha_inicio, v.fecha_fin);
-              const dias = diasEntre(v.fecha_inicio, v.fecha_fin);
-              return (
-                <div
-                  key={v.id}
-                  className={`grid px-6 py-4 items-center hover:bg-surface-3/40 transition-colors ${
-                    i < vacaciones.length - 1 ? "border-b border-edge/50" : ""
-                  }`}
-                  style={{ gridTemplateColumns: "1fr 7rem 7rem 10rem 9rem 3rem" }}
-                >
-                  <div className="flex items-center gap-3">
-                    <Avatar name={v.barberos?.nombre || "?"} size="md" />
-                    <div>
-                      <p className="text-sm font-bold text-fg">{v.barberos?.nombre || "—"}</p>
-                      <p className="text-[10px] text-muted mt-0.5">{dias} día{dias !== 1 ? "s" : ""}</p>
-                    </div>
-                  </div>
-                  <p className="text-sm text-muted-light font-medium">{formatVacFecha(v.fecha_inicio)}</p>
-                  <p className="text-sm text-muted-light font-medium">{formatVacFecha(v.fecha_fin)}</p>
-                  <div>
-                    {v.motivo ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-[10px] font-bold bg-surface-3 border border-edge text-muted-light">
-                        {v.motivo}
-                      </span>
-                    ) : (
-                      <span className="text-sm text-muted italic">—</span>
-                    )}
-                  </div>
-                  <div>
-                    <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border ${status.cls}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
-                        status.label === "Confirmado" ? "bg-brand" :
-                        status.label === "En curso"   ? "bg-success" : "bg-muted"
-                      }`} />
-                      {status.label}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-end">
-                    <button
-                      type="button"
-                      onClick={() => eliminar(v.id)}
-                      className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-3 border border-edge text-muted hover:text-danger hover:border-danger/30 transition"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-
-        {/* Bottom stat cards */}
-        <div className="grid grid-cols-3 gap-4">
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-center gap-4">
-          <div className="w-11 h-11 bg-success/15 border border-success/20 rounded-xl flex items-center justify-center text-success flex-shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2.5} viewBox="0 0 24 24">
-              <path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Aprobadas</p>
-            <p className="text-3xl font-black text-fg mt-1">{String(aprobadas).padStart(2, "0")}</p>
-          </div>
-        </div>
- 
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-center gap-4">
-          <div className="w-11 h-11 bg-warn/15 border border-warn/20 rounded-xl flex items-center justify-center text-warn flex-shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10"/>
-              <path d="M12 6v6l4 2" strokeLinecap="round"/>
-            </svg>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Pendientes</p>
-            <p className="text-3xl font-black text-fg mt-1">{String(pendientes).padStart(2, "0")}</p>
-          </div>
-        </div>
- 
-        <div className="bg-surface-2 border border-edge rounded-2xl p-5 flex items-center gap-4">
-          <div className="w-11 h-11 bg-brand/15 border border-brand/20 rounded-xl flex items-center justify-center text-brand flex-shrink-0">
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
-              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2" strokeLinecap="round" strokeLinejoin="round"/>
-              <circle cx="9" cy="7" r="4"/>
-              <path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
-          <div>
-            <p className="text-[10px] font-bold text-muted uppercase tracking-widest">Equipo Total</p>
-            <p className="text-3xl font-black text-fg mt-1">{String(totalEquipo).padStart(2, "0")}</p>
-          </div>
-        </div>
-      </div>
-      </div> {/* end hidden md:block */}
-
-      {/* Modal */}
-      <Modal open={modal} onClose={() => setModal(false)} title="Añadir Ausencia">
-        <div className="space-y-5">
-          {/* Barber selector */}
-          <div className="flex flex-col gap-1.5">
-            <Label>Barbero</Label>
-            <select
-              value={form.barbero_id}
-              onChange={e => setForm(f => ({ ...f, barbero_id: e.target.value }))}
-              className="w-full bg-surface-3 border border-edge rounded-xl px-4 py-3 text-sm text-fg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand/50 transition appearance-none cursor-pointer"
-            >
-              <option value="">Seleccionar barbero...</option>
-              {barberos.map(b => (
-                <option key={b.id} value={b.id}>{b.nombre}</option>
-              ))}
-            </select>
-          </div>
- 
-          <div className="grid grid-cols-2 gap-3">
-            <Input
-              label="Fecha inicio"
-              type="date"
-              value={form.fecha_inicio}
-              onChange={e => setForm(f => ({ ...f, fecha_inicio: e.target.value }))}
-            />
-            <Input
-              label="Fecha fin"
-              type="date"
-              value={form.fecha_fin}
-              onChange={e => setForm(f => ({ ...f, fecha_fin: e.target.value }))}
-            />
-          </div>
- 
-          <Input
-            label="Motivo (opcional)"
-            type="text"
-            value={form.motivo}
-            onChange={e => setForm(f => ({ ...f, motivo: e.target.value }))}
-            placeholder="Ej. Vacaciones Anuales"
-          />
- 
-          {formError && (
-            <p className="text-xs text-danger bg-danger/10 border border-danger/20 rounded-xl px-4 py-3">{formError}</p>
-          )}
- 
-          <div className="flex gap-3 pt-1">
-            <button
-              type="button"
-              onClick={() => setModal(false)}
-              className="flex-1 bg-surface-3 border border-edge text-muted-light py-3 rounded-2xl text-sm font-semibold hover:text-fg hover:border-edge-light transition"
-            >
-              Cancelar
-            </button>
-            <button
-              type="button"
-              onClick={guardar}
-              className="flex-1 bg-brand hover:bg-brand-hover text-white py-3 rounded-2xl text-sm font-bold transition"
-            >
-              Guardar
-            </button>
-          </div>
-        </div>
-      </Modal>
-    </div>
-  );
-}
-
-// ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
+// ─── MAIN ─────────────────────────────────────────────────────────────────────
 
 export default function Dashboard({ empresaId, seccion }: { empresaId: string; seccion: string }) {
-  const [toast, setToast] = useState({ msg: "", type: "success" });
+  const [toastState, setToastState] = useState({ msg: "", type: "success" });
 
   function showToast(msg: string, type = "success") {
-    setToast({ msg, type });
-    setTimeout(() => setToast({ msg: "", type: "success" }), 3000);
+    setToastState({ msg, type });
+    setTimeout(() => setToastState({ msg: "", type: "success" }), 3000);
   }
 
   return (
-    <div className="font-sans">
-      <main className="max-w-6xl mx-auto px-6 py-8">
-        {seccion === "citas"        && <SectionCitas        toast={showToast} empresaId={empresaId} />}
-        {seccion === "barberos"     && <SectionBarberos     toast={showToast} empresaId={empresaId} />}
-        {seccion === "servicios"    && <SectionServicios    toast={showToast} empresaId={empresaId} />}
-        {seccion === "horarios"     && <SectionHorarios     toast={showToast} empresaId={empresaId} />}
-        {seccion === "vacaciones"   && <SectionVacaciones   toast={showToast} empresaId={empresaId} />}
-        {seccion === "estadisticas" && <SectionEstadisticas empresaId={empresaId} />}
-      </main>
-
-      <Toast message={toast.msg} type={toast.type} />
+    <div style={{ fontFamily: 'var(--font-ui)' }}>
+      {seccion === "citas"     && <SectionCitas     toast={showToast} empresaId={empresaId} />}
+      {seccion === "equipo"    && <SectionEquipo    toast={showToast} empresaId={empresaId} />}
+      {seccion === "servicios" && <SectionServicios toast={showToast} empresaId={empresaId} />}
+      {seccion === "horarios"  && <SectionHorarios  toast={showToast} empresaId={empresaId} />}
+      {seccion === "ausencias" && <SectionAusencias toast={showToast} empresaId={empresaId} />}
+      {seccion === "analitica" && <SectionAnalitica empresaId={empresaId} />}
+      <Toast message={toastState.msg} type={toastState.type} />
     </div>
   );
 }
