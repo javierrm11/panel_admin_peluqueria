@@ -73,7 +73,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let active = true
 
     async function inicializarSesion() {
-      const { data, error } = await supabase.auth.getSession()
+      let data: Awaited<ReturnType<typeof supabase.auth.getSession>>['data']
+      let error: Awaited<ReturnType<typeof supabase.auth.getSession>>['error']
+      try {
+        ;({ data, error } = await supabase.auth.getSession())
+      } catch (err: unknown) {
+        if ((err as { name?: string })?.name === 'AbortError') return
+        throw err
+      }
       if (!active) return
 
       if (error) {
