@@ -1,13 +1,14 @@
 'use client'
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabase";
-import { CalendarDays, Download, TrendingUp, TrendingDown } from "lucide-react";
+import { Download, TrendingUp, TrendingDown } from "lucide-react";
 import { fechaHoy, formatEUR } from "./utils";
 import { Spinner, Empty, Avatar, Sparkline, THead } from "./ui";
 
 export default function SectionAnalitica({ empresaId }: { empresaId: string }) {
   const [stats, setStats]     = useState<any>(null);
   const [periodo, setPeriodo] = useState<"1m"|"3m"|"6m"|"12m">("6m");
+  const [generando, setGenerando] = useState(false);
 
   useEffect(() => {
     async function cargar() {
@@ -15,13 +16,17 @@ export default function SectionAnalitica({ empresaId }: { empresaId: string }) {
       const inicioMes = hoy.substring(0, 7) + "-01";
       const now = new Date();
       const inicio12m = new Date(now.getFullYear(), now.getMonth() - 11, 1).toISOString().split('T')[0];
+      const claveMes = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      const keyActual = claveMes(now);
+      const keyPrev = claveMes(new Date(now.getFullYear(), now.getMonth() - 1, 1));
 
-      const [{ data: citasMes }, { data: serviciosTop }, { data: barberoStats }, { data: clientes }, { data: citasHistorico }] = await Promise.all([
+      const [{ data: citasMes }, { data: serviciosTop }, { data: barberoStats }, { data: clientes }, { data: citasHistorico }, { data: citasMesAll }] = await Promise.all([
         supabase.from("citas").select("estado, servicios(precio), fecha").eq("empresa_id", empresaId).gte("fecha", inicioMes).eq("estado", "confirmada"),
         supabase.from("citas").select("servicios(nombre)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicioMes),
         supabase.from("citas").select("barberos(nombre), servicios(precio)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicioMes),
         supabase.from("clientes").select("id").eq("empresa_id", empresaId),
-        supabase.from("citas").select("fecha, servicios(precio)").eq("empresa_id", empresaId).eq("estado", "confirmada").gte("fecha", inicio12m),
+        supabase.from("citas").select("fecha, estado, servicios(precio)").eq("empresa_id", empresaId).gte("fecha", inicio12m),
+        supabase.from("citas").select("estado").eq("empresa_id", empresaId).gte("fecha", inicioMes),
       ]);
 
       const ingresosMes = (citasMes || []).reduce((acc: number, c: any) => acc + parseFloat(c.servicios?.precio || 0), 0);
@@ -46,25 +51,46 @@ export default function SectionAnalitica({ empresaId }: { empresaId: string }) {
       const totalServicios = Object.values(countServicios).reduce((a, b) => a + b, 0);
       const sortedServicios = Object.entries(countServicios).sort((a, b) => b[1] - a[1]) as [string, number][];
 
-      // Tendencia: agrupar ingresos por mes (últimos 12)
+      // Tendencia: agrupar ingresos y citas por mes (últimos 12, solo confirmadas)
       const MESES_CORTOS = ["Ene","Feb","Mar","Abr","May","Jun","Jul","Ago","Sep","Oct","Nov","Dic"];
       const trendLabels12m: string[] = [];
       const monthlyRevenue: Record<string, number> = {};
+      const monthlyCount: Record<string, number> = {};
       for (let i = 11; i >= 0; i--) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
         monthlyRevenue[key] = 0;
+        monthlyCount[key] = 0;
         trendLabels12m.push(MESES_CORTOS[d.getMonth()]);
       }
       (citasHistorico || []).forEach((c: any) => {
+        if (c.estado !== "confirmada") return;
         const key = c.fecha?.substring(0, 7);
         if (key && key in monthlyRevenue) {
           monthlyRevenue[key] += parseFloat(c.servicios?.precio || 0);
+          monthlyCount[key] += 1;
         }
       });
       const trendData12m = Object.values(monthlyRevenue);
 
-      setStats({ ingresosMes, countCitas, ticketPromedio, nuevosClientes: clientes?.length || 0, countServicios, sortedServicios, totalServicios, barberoData, trendLabels12m, trendData12m });
+      // Comparativa vs. mes anterior
+      const prevIngresos = monthlyRevenue[keyPrev] || 0;
+      const prevCitas = monthlyCount[keyPrev] || 0;
+      const deltaIngresosPct = prevIngresos > 0 ? ((ingresosMes - prevIngresos) / prevIngresos) * 100 : (ingresosMes > 0 ? 100 : 0);
+      const deltaCitasPct = prevCitas > 0 ? ((countCitas - prevCitas) / prevCitas) * 100 : (countCitas > 0 ? 100 : 0);
+
+      // Tasa de cancelación del mes en curso
+      const totalMes = citasMesAll?.length || 0;
+      const canceladasMes = (citasMesAll || []).filter((c: any) => c.estado === "cancelada").length;
+      const tasaCancelacion = totalMes > 0 ? (canceladasMes / totalMes) * 100 : 0;
+
+      setStats({
+        ingresosMes, countCitas, ticketPromedio, nuevosClientes: clientes?.length || 0,
+        countServicios, sortedServicios, totalServicios, barberoData, trendLabels12m, trendData12m,
+        prevIngresos, prevCitas, deltaIngresosPct, deltaCitasPct,
+        totalMes, canceladasMes, tasaCancelacion,
+        keyActual, keyPrev,
+      });
     }
     cargar();
   }, [empresaId]);
@@ -107,6 +133,35 @@ export default function SectionAnalitica({ empresaId }: { empresaId: string }) {
 
   const sparkVals = [40, 55, 48, 62, 70, 65, 80, 75, 88, 92, 85, 90];
 
+  async function descargarInforme() {
+    setGenerando(true);
+    try {
+      // Datos de la empresa (nombre + logo si existen). select("*") evita 400 por columnas ausentes.
+      let empresaNombre = "Tu negocio";
+      let logoUrl: string | null = null;
+      try {
+        const { data } = await supabase.from("empresas").select("*").eq("id", empresaId).single();
+        const d = data as any;
+        if (d?.nombre) empresaNombre = d.nombre;
+        if (d?.logo_url) logoUrl = d.logo_url;
+      } catch { /* genérico */ }
+
+      const logo = logoUrl ? await cargarLogo(logoUrl) : null;
+
+      const { jsPDF } = await import("jspdf");
+      const doc = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
+      generarInformePDF(doc, { empresaNombre, logo, stats, sortedBarberos, donutSlices, donutTotal });
+
+      const fecha = new Date().toISOString().split("T")[0];
+      doc.save(`Informe-${empresaNombre.replace(/[^\w-]+/g, "_")}-${fecha}.pdf`);
+    } catch (e) {
+      console.error(e);
+      alert("No se pudo generar el informe. Inténtalo de nuevo.");
+    } finally {
+      setGenerando(false);
+    }
+  }
+
   return (
     <div className="px-4 sm:px-6 py-5 sm:py-7 max-w-[1200px] mx-auto">
       {/* Header */}
@@ -116,11 +171,9 @@ export default function SectionAnalitica({ empresaId }: { empresaId: string }) {
           <p className="text-[13px] text-fg3 mt-0.5">Rendimiento del centro · últimos 6 meses</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap flex-shrink-0">
-          <button type="button" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors whitespace-nowrap">
-            <CalendarDays size={13} className="flex-shrink-0" /> <span className="hidden xs:inline">Personalizar </span>periodo
-          </button>
-          <button type="button" className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors whitespace-nowrap">
-            <Download size={13} className="flex-shrink-0" /> <span className="hidden xs:inline">Descargar </span>informe
+          <button type="button" onClick={descargarInforme} disabled={generando}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[12.5px] sm:text-[13px] font-semibold hover:bg-accent/90 transition-colors whitespace-nowrap disabled:opacity-60">
+            <Download size={13} className="flex-shrink-0" /> <span className="hidden xs:inline">{generando ? "Generando…" : "Descargar "}</span>informe
           </button>
         </div>
       </div>
@@ -374,4 +427,264 @@ export default function SectionAnalitica({ empresaId }: { empresaId: string }) {
       </div>
     </div>
   );
+}
+
+/* ── Informe PDF (jsPDF, vectorial — sin html2canvas/oklch) ─────────── */
+
+type RGB = [number, number, number];
+const C = {
+  accent: [79, 70, 229] as RGB,
+  ink: [29, 32, 48] as RGB,
+  gray: [134, 134, 154] as RGB,
+  faint: [160, 160, 174] as RGB,
+  border: [236, 236, 243] as RGB,
+  faintB: [243, 243, 248] as RGB,
+  panel: [250, 250, 254] as RGB,
+  track: [238, 238, 245] as RGB,
+  grid: [232, 232, 239] as RGB,
+  green: [22, 163, 74] as RGB,
+  red: [220, 38, 38] as RGB,
+  white: [255, 255, 255] as RGB,
+};
+
+function cargarLogo(url: string): Promise<{ dataUrl: string; w: number; h: number } | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => {
+      try {
+        const c = document.createElement("canvas");
+        c.width = img.naturalWidth; c.height = img.naturalHeight;
+        const ctx = c.getContext("2d");
+        if (!ctx) return resolve(null);
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: c.toDataURL("image/png"), w: img.naturalWidth, h: img.naturalHeight });
+      } catch { resolve(null); }
+    };
+    img.onerror = () => resolve(null);
+    img.src = url;
+    setTimeout(() => resolve(null), 4000);
+  });
+}
+
+const fmtPct = (n: number) => `${n >= 0 ? "+" : ""}${n.toFixed(1).replace(".", ",")}%`;
+const cap = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const clip = (s: string, n: number) => (s.length > n ? s.slice(0, n - 1) + "…" : s);
+
+type SetText = (size: number, color: RGB, style?: "normal" | "bold") => void;
+type Col = { t: string; w: number; align: "left" | "right" };
+type Cell = { t: string; color?: RGB };
+
+function generarInformePDF(doc: any, { empresaNombre, logo, stats, sortedBarberos, donutSlices, donutTotal }: {
+  empresaNombre: string;
+  logo: { dataUrl: string; w: number; h: number } | null;
+  stats: any;
+  sortedBarberos: [string, { count: number; revenue: number }][];
+  donutSlices: any[];
+  donutTotal: number;
+}) {
+  const PW = 210, M = 15, R = PW - M;
+  const innerW = R - M;
+  let y = 0;
+
+  const setText: SetText = (size, color, style = "normal") => {
+    doc.setFont("helvetica", style); doc.setFontSize(size); doc.setTextColor(color[0], color[1], color[2]);
+  };
+  const ensure = (need: number) => { if (y + need > 282) { doc.addPage(); y = 18; } };
+
+  // Barra superior
+  doc.setFillColor(C.accent[0], C.accent[1], C.accent[2]);
+  doc.roundedRect(M, 12, innerW, 1.8, 0.9, 0.9, "F");
+
+  // Logo (imagen o monograma)
+  const logoY = 17, logoSz = 15;
+  if (logo) {
+    const ar = logo.w / logo.h;
+    let lw = logoSz, lh = logoSz;
+    if (ar > 1) lh = logoSz / ar; else lw = logoSz * ar;
+    try { doc.addImage(logo.dataUrl, "PNG", M + (logoSz - lw) / 2, logoY + (logoSz - lh) / 2, lw, lh); } catch { /* ignore */ }
+  } else {
+    doc.setFillColor(C.accent[0], C.accent[1], C.accent[2]);
+    doc.roundedRect(M, logoY, logoSz, logoSz, 3.5, 3.5, "F");
+    const ini = empresaNombre.split(/\s+/).filter(Boolean).slice(0, 2).map((w) => w[0]).join("").toUpperCase() || "·";
+    setText(13, C.white, "bold");
+    doc.text(ini, M + logoSz / 2, logoY + logoSz / 2 + 1.9, { align: "center" });
+  }
+
+  // Cabecera
+  const hx = M + logoSz + 5;
+  setText(7.5, C.accent, "bold");
+  doc.text("INFORME DE ANALÍTICA", hx, 20.5);
+  setText(18, C.ink, "bold");
+  doc.text(clip(empresaNombre, 32), hx, 27.5);
+  setText(9.5, C.gray);
+  doc.text(`Rendimiento de ${cap(new Date().toLocaleDateString("es-ES", { month: "long", year: "numeric" }))}`, hx, 32.5);
+
+  setText(9.5, C.ink, "bold");
+  doc.text(new Date().toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" }), R, 20.5, { align: "right" });
+  setText(8, C.gray);
+  doc.text("Generado automáticamente", R, 25, { align: "right" });
+
+  y = 44;
+
+  // ── KPIs ──
+  y = sectionTitle(doc, "RESUMEN DEL MES", M, y, setText);
+  const kpis: { l: string; v: string; d: number | null }[] = [
+    { l: "Ingresos del mes", v: `${formatEUR(stats.ingresosMes)} €`, d: stats.deltaIngresosPct },
+    { l: "Citas del mes", v: `${stats.countCitas}`, d: stats.deltaCitasPct },
+    { l: "Ticket medio", v: `${formatEUR(stats.ticketPromedio)} €`, d: null },
+    { l: "Clientes", v: `${stats.nuevosClientes}`, d: null },
+  ];
+  const gap = 4, cardW = (innerW - 3 * gap) / 4, cardH = 26;
+  kpis.forEach((k, i) => {
+    const x = M + i * (cardW + gap);
+    doc.setFillColor(C.panel[0], C.panel[1], C.panel[2]);
+    doc.setDrawColor(C.border[0], C.border[1], C.border[2]); doc.setLineWidth(0.2);
+    doc.roundedRect(x, y, cardW, cardH, 2.6, 2.6, "FD");
+    setText(7, C.gray, "bold");
+    doc.text(k.l.toUpperCase(), x + 4, y + 6.5);
+    setText(15, C.ink, "bold");
+    doc.text(k.v, x + 4, y + 14.5);
+    if (k.d !== null) {
+      const up = k.d >= 0;
+      setText(7.5, up ? C.green : C.red, "bold");
+      const dtxt = fmtPct(k.d);
+      doc.text(dtxt, x + 4, y + 21);
+      const dw = doc.getTextWidth(dtxt);
+      setText(7, C.faint);
+      doc.text(" vs. mes ant.", x + 4 + dw, y + 21);
+    }
+  });
+  y += cardH + 12;
+
+  // ── Comparativa ──
+  ensure(40);
+  y = sectionTitle(doc, "COMPARATIVA VS. MES ANTERIOR", M, y, setText);
+  const compCols: Col[] = [
+    { t: "Métrica", w: innerW * 0.4, align: "left" },
+    { t: "Mes anterior", w: innerW * 0.2, align: "right" },
+    { t: "Mes actual", w: innerW * 0.2, align: "right" },
+    { t: "Variación", w: innerW * 0.2, align: "right" },
+  ];
+  const dIng = stats.deltaIngresosPct as number, dCit = stats.deltaCitasPct as number;
+  const compRows: Cell[][] = [
+    [{ t: "Ingresos" }, { t: `${formatEUR(stats.prevIngresos)} €` }, { t: `${formatEUR(stats.ingresosMes)} €` }, { t: fmtPct(dIng), color: dIng >= 0 ? C.green : C.red }],
+    [{ t: "Citas confirmadas" }, { t: `${stats.prevCitas}` }, { t: `${stats.countCitas}` }, { t: fmtPct(dCit), color: dCit >= 0 ? C.green : C.red }],
+    [{ t: "Tasa de cancelación" }, { t: "—" }, { t: `${stats.tasaCancelacion.toFixed(1).replace(".", ",")}%` }, { t: "—", color: C.faint }],
+  ];
+  y = drawTable(doc, M, y, compCols, compRows, setText);
+  y += 12;
+
+  // ── Tendencia ──
+  ensure(70);
+  y = sectionTitle(doc, "TENDENCIA DE INGRESOS · ÚLTIMOS 12 MESES", M, y, setText);
+  const chartH = 52;
+  doc.setDrawColor(C.border[0], C.border[1], C.border[2]); doc.setLineWidth(0.2);
+  doc.roundedRect(M, y, innerW, chartH, 3, 3, "S");
+  drawChart(doc, M + 7, y + 6, innerW - 14, chartH - 17, stats.trendData12m, stats.trendLabels12m, setText);
+  const totalAnual = (stats.trendData12m as number[]).reduce((a, b) => a + b, 0);
+  setText(8.5, C.gray);
+  doc.text(`Total acumulado 12 meses: ${formatEUR(totalAnual)} €`, M + 7, y + chartH - 4);
+  y += chartH + 12;
+
+  // ── Mix de servicios ──
+  ensure(30);
+  y = sectionTitle(doc, `MIX DE SERVICIOS · ${donutTotal} RESERVAS`, M, y, setText);
+  if (!donutSlices.length) {
+    setText(9, C.faint);
+    doc.text("Sin reservas registradas este mes.", M, y + 3);
+    y += 10;
+  } else {
+    const barX = M + 55, barW = innerW - 55 - 28, rowH = 8;
+    donutSlices.forEach((s: any) => {
+      ensure(rowH);
+      const pct = Math.round(s.pct * 100);
+      setText(9.5, C.ink);
+      doc.text(clip(s.nombre, 28), M, y + 4);
+      doc.setFillColor(C.track[0], C.track[1], C.track[2]);
+      doc.roundedRect(barX, y + 1.4, barW, 3.4, 1.7, 1.7, "F");
+      doc.setFillColor(C.accent[0], C.accent[1], C.accent[2]);
+      doc.roundedRect(barX, y + 1.4, Math.max(2, (pct / 100) * barW), 3.4, 1.7, 1.7, "F");
+      setText(8.5, C.gray);
+      doc.text(`${s.count} · ${pct}%`, R, y + 4, { align: "right" });
+      y += rowH;
+    });
+  }
+  y += 10;
+
+  // ── Ranking por profesional ──
+  ensure(30);
+  y = sectionTitle(doc, "RENDIMIENTO POR PROFESIONAL", M, y, setText);
+  const barCols: Col[] = [
+    { t: "#", w: 12, align: "left" },
+    { t: "Profesional", w: innerW - 12 - 30 - 42, align: "left" },
+    { t: "Citas", w: 30, align: "right" },
+    { t: "Ingresos", w: 42, align: "right" },
+  ];
+  const barRows: Cell[][] = sortedBarberos.length
+    ? sortedBarberos.map(([nombre, d], i) => [{ t: `${i + 1}`, color: C.faint }, { t: clip(nombre, 34) }, { t: `${d.count}` }, { t: `${formatEUR(d.revenue)} €` }])
+    : [[{ t: "Sin datos este mes.", color: C.faint }, { t: "" }, { t: "" }, { t: "" }]];
+  y = drawTable(doc, M, y, barCols, barRows, setText);
+
+  // ── Pie de página en todas las páginas ──
+  const pages = doc.getNumberOfPages();
+  for (let p = 1; p <= pages; p++) {
+    doc.setPage(p);
+    doc.setDrawColor(C.border[0], C.border[1], C.border[2]); doc.setLineWidth(0.2);
+    doc.line(M, 287, R, 287);
+    setText(7.5, C.faint);
+    doc.text(`${clip(empresaNombre, 40)} · Informe de analítica`, M, 291);
+    doc.text(`CitasWassap · ${p}/${pages}`, R, 291, { align: "right" });
+  }
+}
+
+function sectionTitle(doc: any, text: string, x: number, y: number, setText: SetText) {
+  setText(8, C.gray, "bold");
+  doc.text(text, x, y);
+  return y + 6;
+}
+
+function drawTable(doc: any, x: number, y: number, cols: Col[], rows: Cell[][], setText: SetText) {
+  const right = x + cols.reduce((a, c) => a + c.w, 0);
+  setText(7.5, C.gray, "bold");
+  let cx = x;
+  cols.forEach((c) => {
+    const tx = c.align === "right" ? cx + c.w - 2 : cx + 2;
+    doc.text(c.t.toUpperCase(), tx, y + 4, { align: c.align });
+    cx += c.w;
+  });
+  y += 7;
+  doc.setDrawColor(C.border[0], C.border[1], C.border[2]); doc.setLineWidth(0.2);
+  doc.line(x, y, right, y);
+  rows.forEach((row) => {
+    y += 8.5;
+    cx = x;
+    row.forEach((cell, i) => {
+      const c = cols[i];
+      setText(9.5, cell.color ?? C.ink, "normal");
+      const tx = c.align === "right" ? cx + c.w - 2 : cx + 2;
+      doc.text(cell.t, tx, y - 1.5, { align: c.align });
+      cx += c.w;
+    });
+    doc.setDrawColor(C.faintB[0], C.faintB[1], C.faintB[2]);
+    doc.line(x, y + 1.5, right, y + 1.5);
+  });
+  return y + 4;
+}
+
+function drawChart(doc: any, x: number, y: number, w: number, h: number, values: number[], labels: string[], setText: SetText) {
+  const max = Math.max(...values, 1);
+  doc.setDrawColor(C.grid[0], C.grid[1], C.grid[2]); doc.setLineWidth(0.15);
+  for (let g = 0; g <= 4; g++) { const gy = y + h - (g / 4) * h; doc.line(x, gy, x + w, gy); }
+  const pts = values.map((v, i) => {
+    const px = values.length <= 1 ? x + w / 2 : x + (i / (values.length - 1)) * w;
+    const py = y + h - (v / max) * h;
+    return [px, py] as [number, number];
+  });
+  doc.setDrawColor(C.accent[0], C.accent[1], C.accent[2]); doc.setLineWidth(0.8);
+  for (let i = 1; i < pts.length; i++) doc.line(pts[i - 1][0], pts[i - 1][1], pts[i][0], pts[i][1]);
+  doc.setFillColor(C.accent[0], C.accent[1], C.accent[2]);
+  pts.forEach((p) => doc.circle(p[0], p[1], 0.8, "F"));
+  setText(6.5, C.faint);
+  labels.forEach((l, i) => { if (pts[i]) doc.text(l, pts[i][0], y + h + 4, { align: "center" }); });
 }

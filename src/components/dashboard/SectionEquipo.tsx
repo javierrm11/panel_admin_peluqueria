@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "../../lib/supabase";
-import { Filter, Plus, Pencil } from "lucide-react";
+import { Plus, Pencil } from "lucide-react";
 import { fechaHoy, formatEUR } from "./utils";
 import { Spinner, Empty, KpiStrip, Avatar, Badge, Sparkline, Modal, FormInput } from "./ui";
 
@@ -119,9 +119,6 @@ export default function SectionEquipo({ toast, empresaId }: { toast: (m: string,
           <p className="text-[12.5px] sm:text-[13px] text-fg3 mt-0.5">{barberos.length} miembros · {activos} disponibles esta semana</p>
         </div>
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button type="button" className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors">
-            <Filter size={13} /> <span className="hidden sm:inline">Filtros</span>
-          </button>
           <button type="button" onClick={() => abrirModal()}
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[12.5px] sm:text-[13px] font-semibold hover:bg-accent/90 transition-colors whitespace-nowrap">
             <Plus size={13} /> Añadir miembro

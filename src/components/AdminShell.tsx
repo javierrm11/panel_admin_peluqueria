@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import {
   Calendar, Users, Scissors, Clock, Umbrella, BarChart2,
-  Bell, Settings, HelpCircle, ChevronDown, LogOut,
-  MessageCircle, Search, MoreHorizontal, X,
+  Bell, HelpCircle, ChevronDown, LogOut,
+  Search, MoreHorizontal, X,
 } from 'lucide-react'
 
 // ── Nav structure ──────────────────────────────────────────────────────────────
@@ -18,11 +18,6 @@ const NAV_OPERACION = [
   { id: 'analitica', label: 'Analítica', Icon: BarChart2 },
 ]
 
-const NAV_HERRAMIENTAS = [
-  { id: 'whatsapp', label: 'WhatsApp', Icon: MessageCircle },
-  { id: 'ajustes',  label: 'Ajustes',  Icon: Settings      },
-]
-
 const MOBILE_NAV = [
   { id: 'citas',     label: 'Citas',     Icon: Calendar  },
   { id: 'equipo',    label: 'Equipo',    Icon: Users     },
@@ -33,7 +28,6 @@ const MOBILE_NAV = [
 const SECTION_LABEL: Record<string, string> = {
   citas: 'Citas', equipo: 'Equipo', servicios: 'Servicios',
   horarios: 'Horarios', ausencias: 'Ausencias', analitica: 'Analítica',
-  whatsapp: 'WhatsApp', ajustes: 'Ajustes',
 }
 
 // ── Nav item ──────────────────────────────────────────────────────────────────
@@ -137,21 +131,6 @@ function SidebarContent({ seccion, onSeccionChange, orgName, user, onClose }: Si
         </p>
         <div className="space-y-0.5">
           {NAV_OPERACION.map(({ id, label, Icon }) => (
-            <NavItem
-              key={id} id={id} label={label} Icon={Icon}
-              active={seccion === id}
-              onClick={() => { onSeccionChange(id); onClose?.() }}
-            />
-          ))}
-        </div>
-
-        <div className="my-3 mx-0.5 h-px bg-line2" />
-
-        <p className="px-2.5 pb-1.5 text-[10.5px] font-semibold uppercase tracking-widest text-fg4">
-          Herramientas
-        </p>
-        <div className="space-y-0.5">
-          {NAV_HERRAMIENTAS.map(({ id, label, Icon }) => (
             <NavItem
               key={id} id={id} label={label} Icon={Icon}
               active={seccion === id}
