@@ -148,11 +148,13 @@ export default function SectionHorarios({ toast, empresaId }: { toast: (m: strin
                   {/* Turnos */}
                   <div className="flex-1 flex items-center gap-2 flex-wrap">
                     {slots.map(h => (
-                      <button
+                      <div
                         key={h.id}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => abrirModal(h)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line bg-bg hover:border-accent/40 hover:bg-accent2/20 transition-colors group"
+                        onKeyDown={e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); abrirModal(h); } }}
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-line bg-bg hover:border-accent/40 hover:bg-accent2/20 transition-colors group cursor-pointer focus-visible:ring-2 focus-visible:ring-accent focus-visible:outline-none"
                       >
                         <Clock size={11} className="text-fg4 group-hover:text-accent" />
                         <span className="text-[12.5px] font-mono text-fg2 group-hover:text-fg">
@@ -166,7 +168,7 @@ export default function SectionHorarios({ toast, empresaId }: { toast: (m: strin
                         >
                           <LucideX size={10} />
                         </button>
-                      </button>
+                      </div>
                     ))}
                     <button
                       type="button"
