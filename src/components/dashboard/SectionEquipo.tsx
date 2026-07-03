@@ -17,6 +17,18 @@ export default function SectionEquipo({ toast, empresaId }: { toast: (m: string,
   const [ingresosPorBarbero, setIngresosPorBarbero] = useState<Record<string, number>>({});
   const [sparkPorBarbero, setSparkPorBarbero]       = useState<Record<string, number[]>>({});
   const [tabFiltro, setTabFiltro]       = useState<"todos" | "activos" | "ausentes">("todos");
+  const [perfil, setPerfil]             = useState<any>(null);
+  const [perfilServicios, setPerfilServicios] = useState<string[]>([]);
+
+  async function verPerfil(b: any) {
+    setPerfil(b);
+    setPerfilServicios([]);
+    const { data } = await supabase
+      .from("barbero_servicios")
+      .select("servicios(nombre)")
+      .eq("barbero_id", b.id);
+    setPerfilServicios((data || []).map((r: any) => r.servicios?.nombre).filter(Boolean));
+  }
 
   const cargar = useCallback(async () => {
     setLoading(true);
@@ -201,7 +213,7 @@ export default function SectionEquipo({ toast, empresaId }: { toast: (m: string,
                     <span className="text-[11px] text-fg4">Tendencia 12 sem.</span>
                     <Sparkline values={sparkPorBarbero[b.nombre] ?? []} />
                   </div>
-                  <span className="text-[12px] text-accent font-medium">Ver perfil →</span>
+                  <button type="button" onClick={() => verPerfil(b)} className="text-[12px] text-accent font-medium hover:underline">Ver perfil →</button>
                 </div>
               </div>
             );
@@ -215,6 +227,54 @@ export default function SectionEquipo({ toast, empresaId }: { toast: (m: string,
           </button>
         </div>
       )}
+
+      {/* Modal de perfil */}
+      <Modal open={!!perfil} onClose={() => setPerfil(null)} title="Perfil del miembro">
+        {perfil && (
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <Avatar name={perfil.nombre} size="lg" />
+              <div className="min-w-0">
+                <p className="text-[15px] font-semibold text-fg leading-tight">{perfil.nombre}</p>
+                <p className="text-[12px] text-accent mt-0.5">{perfil.especialidad || "Barbero"}</p>
+                {perfil.telefono && <p className="text-[11.5px] text-fg4 mt-0.5 font-mono">{perfil.telefono}</p>}
+              </div>
+              <div className="ml-auto"><Badge variant={perfil.activo ? "success" : "neutral"}>{perfil.activo ? "Activo" : "Ausente"}</Badge></div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 border-t border-line pt-4">
+              {[
+                { label: "Citas · Mes", val: citasPorBarbero[perfil.nombre] ?? 0 },
+                { label: "Ingresos", val: (ingresosPorBarbero[perfil.nombre] ?? 0) > 0 ? `${formatEUR(ingresosPorBarbero[perfil.nombre])} €` : "—" },
+                { label: "Tendencia", val: <Sparkline values={sparkPorBarbero[perfil.nombre] ?? []} /> },
+              ].map(({ label, val }) => (
+                <div key={label}>
+                  <p className="text-[9.5px] font-semibold uppercase tracking-wider text-fg4 leading-tight">{label}</p>
+                  <div className="text-[14px] font-semibold text-fg tabular mt-1 leading-none">{val}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="border-t border-line pt-4">
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-fg3 mb-2">Servicios que realiza</p>
+              {perfilServicios.length === 0 ? (
+                <p className="text-[12.5px] text-fg4">Sin servicios asignados.</p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {perfilServicios.map(n => (
+                    <span key={n} className="px-2.5 py-1 rounded-lg text-[12px] font-medium bg-accent2 text-accent border border-accent/20">{n}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 pt-1">
+              <button type="button" onClick={() => setPerfil(null)} className="flex-1 py-2.5 rounded-lg border border-line text-fg3 text-[13px] font-medium hover:bg-hover transition-colors">Cerrar</button>
+              <button type="button" onClick={() => { const b = perfil; setPerfil(null); abrirModal(b); }} className="flex-1 py-2.5 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors">Editar miembro</button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Modal */}
       <Modal open={modal} onClose={() => setModal(false)} title={editando ? "Editar miembro" : "Añadir miembro"}>

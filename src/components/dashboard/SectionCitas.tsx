@@ -1,14 +1,14 @@
 'use client'
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { supabase } from "../../lib/supabase";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Download } from "lucide-react";
 import {
   toISO, parseISO, addDays, startOfWeek, startOfMonth, isSameDay,
-  horaAMin, layoutDia, diaCorto, diaLargo, mesLargo,
+  horaAMin, minAHora, layoutDia, diaCorto, diaLargo, mesLargo,
   fmtHora12, fmtRango12, fmtGutter,
   formatEUR, avColor,
 } from "./utils";
-import { Spinner, KpiStrip, Badge } from "./ui";
+import { Spinner, KpiStrip, Badge, Modal, FormInput, FormSelect } from "./ui";
 
 type Vista = "dia" | "semana" | "mes";
 const HOUR_H = 56;            // alto de una hora en px
@@ -44,6 +44,21 @@ export default function SectionCitas({ toast, empresaId }: { toast: (m: string, 
   const [ocultarCanceladas, setOcultarCanceladas] = useState(false);
   const [sel, setSel] = useState<Cita | null>(null);
 
+  // Listas para crear citas + modal "Nueva cita"
+  const [listas, setListas] = useState<{ servicios: any[]; barberos: any[]; clientes: any[] }>({ servicios: [], barberos: [], clientes: [] });
+  const [modalNueva, setModalNueva] = useState(false);
+  const [nuevaForm, setNuevaForm] = useState({ clienteId: "nuevo", nuevoNombre: "", nuevoTel: "", servicioId: "", barberoId: "", fecha: "", hora: "", estado: "confirmada" });
+
+  const cargarListas = useCallback(async () => {
+    const [{ data: sv }, { data: bb }, { data: cl }] = await Promise.all([
+      supabase.from("servicios").select("id, nombre, precio, duracion_minutos").eq("empresa_id", empresaId).order("nombre"),
+      supabase.from("barberos").select("id, nombre, activo").eq("empresa_id", empresaId).order("nombre"),
+      supabase.from("clientes").select("id, nombre, telefono").eq("empresa_id", empresaId).order("nombre"),
+    ]);
+    setListas({ servicios: sv || [], barberos: bb || [], clientes: cl || [] });
+  }, [empresaId]);
+  useEffect(() => { cargarListas(); }, [cargarListas]);
+
   // Días visibles según la vista
   const dias = useMemo<Date[]>(() => {
     if (vista === "dia") return [anchor];
@@ -76,6 +91,64 @@ export default function SectionCitas({ toast, empresaId }: { toast: (m: string, 
     toast("Cita cancelada", "success");
     setSel(null);
     cargar();
+  }
+
+  function abrirNueva(prefill?: { fecha?: string; hora?: string }) {
+    const activos = listas.barberos.filter(b => b.activo !== false);
+    setNuevaForm({
+      clienteId: "nuevo", nuevoNombre: "", nuevoTel: "",
+      servicioId: listas.servicios[0]?.id?.toString() ?? "",
+      barberoId: (activos[0] ?? listas.barberos[0])?.id?.toString() ?? "",
+      fecha: prefill?.fecha ?? toISO(anchor),
+      hora: prefill?.hora ?? "10:00",
+      estado: "confirmada",
+    });
+    setModalNueva(true);
+  }
+
+  async function guardarCita() {
+    const f = nuevaForm;
+    if (!f.servicioId || !f.barberoId || !f.fecha || !f.hora) { toast("Completa servicio, profesional, fecha y hora", "error"); return; }
+    let clienteId: string | null = f.clienteId === "nuevo" ? null : f.clienteId;
+    if (f.clienteId === "nuevo") {
+      if (!f.nuevoNombre.trim() && !f.nuevoTel.trim()) { toast("Indica nombre o teléfono del cliente", "error"); return; }
+      const { data, error } = await supabase.from("clientes")
+        .insert({ nombre: f.nuevoNombre.trim() || null, telefono: f.nuevoTel.trim() || null, empresa_id: empresaId })
+        .select("id").single();
+      if (error || !data) { toast("No se pudo crear el cliente", "error"); return; }
+      clienteId = (data as any).id;
+    }
+    const { error } = await supabase.from("citas").insert({
+      empresa_id: empresaId, cliente_id: clienteId,
+      servicio_id: Number(f.servicioId), barbero_id: Number(f.barberoId),
+      fecha: f.fecha, hora: f.hora.length === 5 ? `${f.hora}:00` : f.hora, estado: f.estado,
+    });
+    if (error) { toast("No se pudo crear la cita", "error"); return; }
+    toast("Cita creada", "success");
+    setModalNueva(false);
+    cargar();
+    if (f.clienteId === "nuevo") cargarListas();
+  }
+
+  function exportarCSV() {
+    if (!citas.length) { toast("No hay citas que exportar en este período", "error"); return; }
+    const cab = ["Fecha", "Hora", "Cliente", "Teléfono", "Servicio", "Profesional", "Precio (€)", "Estado"];
+    const filas = [...citas]
+      .sort((a, b) => (a.fecha + a.hora).localeCompare(b.fecha + b.hora))
+      .map(c => [
+        c.fecha, c.hora?.substring(0, 5) ?? "",
+        c.clientes?.nombre ?? "", c.clientes?.telefono ?? "",
+        c.servicios?.nombre ?? "", c.barberos?.nombre ?? "",
+        c.servicios?.precio != null ? String(c.servicios.precio) : "",
+        estadoMap[c.estado]?.label ?? c.estado,
+      ]);
+    const csv = [cab, ...filas].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(";")).join("\r\n");
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `citas-${rango.inicio}_a_${rango.fin}.csv`; a.click();
+    URL.revokeObjectURL(url);
+    toast("CSV exportado", "success");
   }
 
   const visibles = ocultarCanceladas ? citas.filter(c => c.estado !== "cancelada") : citas;
@@ -117,9 +190,16 @@ export default function SectionCitas({ toast, empresaId }: { toast: (m: string, 
             {citas.length} reservas · {confirmadas.length} confirmadas en el período
           </p>
         </div>
-        <button type="button" className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[12.5px] sm:text-[13px] font-semibold hover:bg-accent/90 transition-colors whitespace-nowrap self-start">
-          <Plus size={13} /> Nueva cita
-        </button>
+        <div className="flex items-center gap-2 flex-shrink-0 self-start">
+          <button type="button" onClick={exportarCSV}
+            className="flex items-center gap-1.5 px-2.5 sm:px-3 py-2 rounded-lg border border-line bg-surface text-fg2 text-[12.5px] sm:text-[13px] font-medium hover:bg-hover transition-colors">
+            <Download size={13} /> <span className="hidden sm:inline">Exportar</span>
+          </button>
+          <button type="button" onClick={() => abrirNueva()}
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-accent text-accentfg text-[12.5px] sm:text-[13px] font-semibold hover:bg-accent/90 transition-colors whitespace-nowrap">
+            <Plus size={13} /> Nueva cita
+          </button>
+        </div>
       </div>
 
       {/* KPI strip */}
@@ -181,19 +261,62 @@ export default function SectionCitas({ toast, empresaId }: { toast: (m: string, 
       ) : vista === "mes" ? (
         <VistaMes dias={dias} mesActual={anchor.getMonth()} citas={visibles} onSelect={setSel} onDay={irADia} />
       ) : (
-        <VistaTiempo dias={dias} citas={visibles} onSelect={setSel} onDay={irADia} unicoDia={vista === "dia"} />
+        <VistaTiempo dias={dias} citas={visibles} onSelect={setSel} onDay={irADia} unicoDia={vista === "dia"} onCreate={(fecha, hora) => abrirNueva({ fecha, hora })} />
       )}
 
       {/* Detalle de cita */}
       {sel && <DetalleCita cita={sel} onClose={() => setSel(null)} onCancelar={cancelar} />}
+
+      {/* Modal Nueva cita */}
+      <Modal open={modalNueva} onClose={() => setModalNueva(false)} title="Nueva cita">
+        <div className="space-y-3.5">
+          <FormSelect label="Cliente" value={nuevaForm.clienteId} onChange={e => setNuevaForm(f => ({ ...f, clienteId: e.target.value }))}>
+            <option value="nuevo">➕ Nuevo cliente…</option>
+            {listas.clientes.map(c => (
+              <option key={c.id} value={c.id}>{c.nombre || c.telefono || "Sin nombre"}</option>
+            ))}
+          </FormSelect>
+          {nuevaForm.clienteId === "nuevo" && (
+            <div className="grid grid-cols-2 gap-3">
+              <FormInput label="Nombre" value={nuevaForm.nuevoNombre} onChange={e => setNuevaForm(f => ({ ...f, nuevoNombre: e.target.value }))} placeholder="Nombre del cliente" />
+              <FormInput label="Teléfono" value={nuevaForm.nuevoTel} onChange={e => setNuevaForm(f => ({ ...f, nuevoTel: e.target.value }))} placeholder="600 000 000" />
+            </div>
+          )}
+          <FormSelect label="Servicio" value={nuevaForm.servicioId} onChange={e => setNuevaForm(f => ({ ...f, servicioId: e.target.value }))}>
+            {listas.servicios.length === 0 && <option value="">Sin servicios</option>}
+            {listas.servicios.map(s => (
+              <option key={s.id} value={s.id}>{s.nombre}{s.precio != null ? ` · ${formatEUR(Number(s.precio))} €` : ""}</option>
+            ))}
+          </FormSelect>
+          <FormSelect label="Profesional" value={nuevaForm.barberoId} onChange={e => setNuevaForm(f => ({ ...f, barberoId: e.target.value }))}>
+            {listas.barberos.length === 0 && <option value="">Sin profesionales</option>}
+            {listas.barberos.map(b => (
+              <option key={b.id} value={b.id}>{b.nombre}{b.activo === false ? " (inactivo)" : ""}</option>
+            ))}
+          </FormSelect>
+          <div className="grid grid-cols-2 gap-3">
+            <FormInput label="Fecha" type="date" value={nuevaForm.fecha} onChange={e => setNuevaForm(f => ({ ...f, fecha: e.target.value }))} />
+            <FormInput label="Hora" type="time" value={nuevaForm.hora} onChange={e => setNuevaForm(f => ({ ...f, hora: e.target.value }))} />
+          </div>
+          <FormSelect label="Estado" value={nuevaForm.estado} onChange={e => setNuevaForm(f => ({ ...f, estado: e.target.value }))}>
+            <option value="confirmada">Confirmada</option>
+            <option value="pendiente">Pendiente</option>
+          </FormSelect>
+          <div className="flex gap-3 pt-1">
+            <button type="button" onClick={() => setModalNueva(false)} className="flex-1 py-2.5 rounded-lg border border-line text-fg3 text-[13px] font-medium hover:bg-hover transition-colors">Cancelar</button>
+            <button type="button" onClick={guardarCita} className="flex-1 py-2.5 rounded-lg bg-accent text-accentfg text-[13px] font-semibold hover:bg-accent/90 transition-colors">Crear cita</button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }
 
 /* ── Vista de tiempo (Día / Días / Semana) ─────────────── */
 
-function VistaTiempo({ dias, citas, onSelect, onDay, unicoDia }: {
+function VistaTiempo({ dias, citas, onSelect, onDay, unicoDia, onCreate }: {
   dias: Date[]; citas: Cita[]; onSelect: (c: Cita) => void; onDay: (d: Date) => void; unicoDia: boolean;
+  onCreate: (fecha: string, hora: string) => void;
 }) {
   // Límites horarios: 8–21 por defecto, ampliados si hay citas fuera
   const { startH, endH } = useMemo(() => {
@@ -260,8 +383,16 @@ function VistaTiempo({ dias, citas, onSelect, onDay, unicoDia }: {
               return { ...c, start, end: start + (Number(c.servicios?.duracion_minutos) || 30) };
             }));
             const hoy = isSameDay(d, ahora);
+            const crearEnClic = (e: React.MouseEvent<HTMLDivElement>) => {
+              const rect = e.currentTarget.getBoundingClientRect();
+              const yPix = e.clientY - rect.top;
+              const min = startH * 60 + (yPix / HOUR_H) * 60;
+              const redondeada = Math.max(startH * 60, Math.round(min / 30) * 30);
+              onCreate(toISO(d), minAHora(redondeada));
+            };
             return (
-              <div key={toISO(d)} className={`flex-1 min-w-0 relative ${!unicoDia ? "border-l border-line first:border-l-0" : ""}`}>
+              <div key={toISO(d)} onClick={crearEnClic} title="Clic para crear una cita"
+                className={`flex-1 min-w-0 relative cursor-pointer ${!unicoDia ? "border-l border-line first:border-l-0" : ""}`}>
                 {/* Líneas de hora */}
                 {horas.map((h, i) => (
                   <div key={h} className="absolute left-0 right-0 border-t border-line/70" style={{ top: i * HOUR_H }} />
@@ -283,7 +414,7 @@ function VistaTiempo({ dias, citas, onSelect, onDay, unicoDia }: {
                   const { bg, text } = avColor(ev.barberos?.nombre ?? "?");
                   return (
                     <button
-                      key={ev.id} type="button" onClick={() => onSelect(ev)}
+                      key={ev.id} type="button" onClick={(e) => { e.stopPropagation(); onSelect(ev); }}
                       className={`absolute rounded-lg px-2 py-1 overflow-hidden text-left ring-1 ring-black/5 transition-shadow hover:z-30 hover:shadow-[var(--shadow-2)] ${bg} ${text} ${cancelada ? "opacity-50 line-through" : ""}`}
                       style={{ top, height, left: `calc(${left}% + 1px)`, width: `calc(${width}% - 2px)` }}
                       title={`${fmtRango12(ev.start, ev.end)} · ${ev.servicios?.nombre ?? ""} · ${ev.clientes?.nombre ?? ""}`}
